@@ -143,7 +143,7 @@ type HTTPClient struct {
 
 // Write writes test results to the TI server
 func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*types.TestCase) error {
-	if err := c.validate(); err != nil {
+	if err := c.validateWriteArgs(stepID, report); err != nil {
 		return err
 	}
 	path := fmt.Sprintf(dbEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, report, c.Repo, c.Sha, c.CommitLink)
@@ -153,7 +153,7 @@ func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*
 
 // DownloadLink returns a list of links where the relevant agent artifacts can be downloaded
 func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, framework string) ([]types.DownloadLink, error) {
-	if err := c.validate(); err != nil {
+	if err := c.validateDownloadLinkArgs(language); err != nil {
 		return []types.DownloadLink{}, err
 	}
 	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework)
@@ -165,7 +165,7 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 // SelectTests returns a list of tests which should be run intelligently
 func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target string, in *types.SelectTestsReq) (types.SelectTestsResp, error) {
 	var resp types.SelectTestsResp
-	if err := c.validate(); err != nil {
+	if err := c.validateSelectTestsArgs(stepID, source, target); err != nil {
 		return resp, err
 	}
 	if source == "" {
@@ -182,7 +182,7 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 
 // UploadCg uploads avro encoded callgraph to server
 func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte) error {
-	if err := c.validate(); err != nil {
+	if err := c.validateUploadCgArgs(stepID, source, target); err != nil {
 		return err
 	}
 	if source == "" {
@@ -201,7 +201,7 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 // GetTestTimes gets test timing data
 func (c *HTTPClient) GetTestTimes(ctx context.Context, in *types.GetTestTimesReq) (types.GetTestTimesResp, error) {
 	var resp types.GetTestTimesResp
-	if err := c.validate(); err != nil {
+	if err := c.validateGetTestTimesArgs(); err != nil {
 		return resp, err
 	}
 	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID)
@@ -337,13 +337,6 @@ func (c *HTTPClient) client() *http.Client {
 	return c.Client
 }
 
-func (c *HTTPClient) validate() error {
-	if c.Endpoint == "" {
-		return fmt.Errorf("TI endpoint is not set in config")
-	}
-	return nil
-}
-
 // helper function to open an http request
 func (c *HTTPClient) open(ctx context.Context, path, method string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, path, body)
@@ -362,4 +355,122 @@ func createBackoff(maxElapsedTime time.Duration) *backoff.ExponentialBackOff {
 	exp := backoff.NewExponentialBackOff()
 	exp.MaxElapsedTime = maxElapsedTime
 	return exp
+}
+
+func (c *HTTPClient) validateTiArgs() error {
+	if c.Endpoint == "" {
+		return fmt.Errorf("ti endpoint is not set")
+	}
+	if c.Token == "" {
+		return fmt.Errorf("ti token is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateBasicArgs() error {
+	if c.AccountID == "" {
+		return fmt.Errorf("accountID is not set")
+	}
+	if c.OrgID == "" {
+		return fmt.Errorf("orgID is not set")
+	}
+	if c.ProjectID == "" {
+		return fmt.Errorf("projectID is not set")
+	}
+	if c.PipelineID == "" {
+		return fmt.Errorf("pipelineID is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateWriteArgs(stepID, report string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
+	}
+	if report == "" {
+		return fmt.Errorf("report is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateDownloadLinkArgs(language string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if language == "" {
+		return fmt.Errorf("language is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateSelectTestsArgs(stepID, source, target string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
+	}
+	if source == "" {
+		return fmt.Errorf("source branch is not set")
+	}
+	if target == "" {
+		return fmt.Errorf("target branch is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
+	}
+	if source == "" {
+		return fmt.Errorf("source branch is not set")
+	}
+	if target == "" {
+		return fmt.Errorf("target branch is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateGetTestTimesArgs() error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	return nil
 }
