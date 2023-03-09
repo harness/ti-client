@@ -95,6 +95,16 @@ type GetVgResp struct {
 	Edges []VisMapping `json:"edges"`
 }
 
+type GetCgCountReq struct {
+	Repo   string `json:"repo""`
+	Branch string `json:"branch"`
+}
+
+type GetCgCountResp struct {
+	NodeCount     int `json:"node_count""`
+	RelationCount int `json:"relation_count"`
+}
+
 type Status string
 type FileStatus string
 type Selection string
