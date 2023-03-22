@@ -29,6 +29,9 @@ const (
 	// SelectFlakyTest represents a selection of a test because it's flaky.
 	SelectFlakyTest = "flaky_test"
 
+	// SelectAlwaysRunTest represents a selection of a test because it always must be run.
+	SelectAlwaysRunTest = "always_run_test"
+
 	// FileModified represents a modified file. Keeping it consistent with git syntax.
 	FileModified = "modified"
 
