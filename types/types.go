@@ -1,5 +1,9 @@
 package types
 
+type Status string
+type FileStatus string
+type Selection string
+
 const (
 	// StatusPassed represents a passed test.
 	StatusPassed = "passed"
@@ -42,75 +46,17 @@ const (
 	FileDeleted = "deleted"
 )
 
-// API request and response structs
-
-type MergePartialCgRequest struct {
-	AccountId    string
-	Repo         string
-	TargetBranch string
-	Diff         DiffInfo
+func ConvertToFileStatus(s string) FileStatus {
+	switch s {
+	case FileModified:
+		return FileModified
+	case FileAdded:
+		return FileAdded
+	case FileDeleted:
+		return FileDeleted
+	}
+	return FileModified
 }
-
-type GetTestTimesReq struct {
-	IncludeFilename  bool `json:"include_filename"`
-	IncludeTestSuite bool `json:"include_test_suite"`
-	IncludeTestCase  bool `json:"include_test_case"`
-	IncludeClassname bool `json:"include_classname"`
-}
-
-type GetTestTimesResp struct {
-	FileTimeMap  map[string]int `json:"file_time_map"`
-	SuiteTimeMap map[string]int `json:"suite_time_map"`
-	TestTimeMap  map[string]int `json:"test_time_map"`
-	ClassTimeMap map[string]int `json:"class_time_map"`
-}
-
-type SelectTestsReq struct {
-	SelectAll    bool     `json:"select_all"`
-	Files        []File   `json:"files"`
-	TargetBranch string   `json:"target_branch"`
-	Repo         string   `json:"repo"`
-	TiConfig     TiConfig `json:"ti_config"`
-}
-
-type SelectTestsResp struct {
-	TotalTests    int            `json:"total_tests"`
-	SelectedTests int            `json:"selected_tests"`
-	NewTests      int            `json:"new_tests"`
-	UpdatedTests  int            `json:"updated_tests"`
-	SrcCodeTests  int            `json:"src_code_tests"`
-	SelectAll     bool           `json:"select_all"` // We might choose to run all the tests
-	Tests         []RunnableTest `json:"tests"`
-}
-
-type GetVgReq struct {
-	AccountId    string
-	Repo         string
-	SourceBranch string
-	TargetBranch string
-	Limit        int64
-	Class        string
-	DiffFiles    []File
-}
-
-type GetVgResp struct {
-	Nodes []VisNode    `json:"nodes"`
-	Edges []VisMapping `json:"edges"`
-}
-
-type GetCgCountReq struct {
-	Repo   string `json:"repo""`
-	Branch string `json:"branch"`
-}
-
-type GetCgCountResp struct {
-	NodeCount     int `json:"node_count""`
-	RelationCount int `json:"relation_count"`
-}
-
-type Status string
-type FileStatus string
-type Selection string
 
 type Result struct {
 	Status  Status `json:"status"`
@@ -191,6 +137,26 @@ type RunnableTest struct {
 	} `json:"autodetect"`
 }
 
+type SelectTestsResp struct {
+	TotalTests    int            `json:"total_tests"`
+	SelectedTests int            `json:"selected_tests"`
+	NewTests      int            `json:"new_tests"`
+	UpdatedTests  int            `json:"updated_tests"`
+	SrcCodeTests  int            `json:"src_code_tests"`
+	SelectAll     bool           `json:"select_all"` // We might choose to run all the tests
+	Tests         []RunnableTest `json:"tests"`
+}
+
+type SelectTestsReq struct {
+	// If this is specified, TI service will return saying it wants to run all the tests. We want to
+	// maintain stats even when all the tests are run.
+	SelectAll    bool     `json:"select_all"`
+	Files        []File   `json:"files"`
+	TargetBranch string   `json:"target_branch"`
+	Repo         string   `json:"repo"`
+	TiConfig     TiConfig `json:"ti_config"`
+}
+
 type SelectionDetails struct {
 	New int `json:"new_tests"`
 	Upd int `json:"updated_tests"`
@@ -208,10 +174,24 @@ type SelectionOverview struct {
 	Selected     SelectionDetails `json:"selected_tests"`
 }
 
+type GetTestTimesReq struct {
+	IncludeFilename  bool `json:"include_filename"`
+	IncludeTestSuite bool `json:"include_test_suite"`
+	IncludeTestCase  bool `json:"include_test_case"`
+	IncludeClassname bool `json:"include_classname"`
+}
+
+type GetTestTimesResp struct {
+	FileTimeMap  map[string]int `json:"file_time_map"`
+	SuiteTimeMap map[string]int `json:"suite_time_map"`
+	TestTimeMap  map[string]int `json:"test_time_map"`
+	ClassTimeMap map[string]int `json:"class_time_map"`
+}
+
 type File struct {
-	Name    string     `json:"name"`
-	Status  FileStatus `json:"status"`
-	Package string     `json:"package"`
+	Name     string     `json:"name"`
+	Status   FileStatus `json:"status"`
+	Package  string     `json:"package"`
 }
 
 type DownloadLink struct {
@@ -223,10 +203,9 @@ type DownloadLink struct {
 // as .ticonfig. The contents of the file get deserialized into this object.
 // Sample YAML:
 // config:
-//
-//	ignore:
-//	  - README.md
-//	  - config.sh
+//   ignore:
+//     - README.md
+//     - config.sh
 type TiConfig struct {
 	Config struct {
 		Ignore []string `json:"ignore"`
@@ -236,6 +215,13 @@ type TiConfig struct {
 type DiffInfo struct {
 	Sha   string
 	Files []File
+}
+
+type MergePartialCgRequest struct {
+	AccountId    string
+	Repo         string
+	TargetBranch string
+	Diff         DiffInfo
 }
 
 // Visualization structures
@@ -256,4 +242,29 @@ type VisNode struct {
 type VisMapping struct {
 	From int   `json:"from"`
 	To   []int `json:"to"`
+}
+
+type GetVgReq struct {
+	AccountId    string
+	Repo         string
+	SourceBranch string
+	TargetBranch string
+	Limit        int64
+	Class        string
+	DiffFiles    []File
+}
+
+type GetVgResp struct {
+	Nodes []VisNode    `json:"nodes"`
+	Edges []VisMapping `json:"edges"`
+}
+
+type GetCgCountReq struct {
+	Repo   string `json:"repo""`
+	Branch string `json:"branch"`
+}
+
+type GetCgCountResp struct {
+	NodeCount     int `json:"node_count""`
+	RelationCount int `json:"relation_count"`
 }
