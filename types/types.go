@@ -227,9 +227,10 @@ type DownloadLink struct {
 // as .ticonfig. The contents of the file get deserialized into this object.
 // Sample YAML:
 // config:
-//   ignore:
-//     - README.md
-//     - config.sh
+//
+//	ignore:
+//	  - README.md
+//	  - config.sh
 type TiConfig struct {
 	Config struct {
 		Ignore []string `json:"ignore"`
