@@ -1,3 +1,8 @@
+// Copyright 2021 Harness Inc. All rights reserved.
+// Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+// that can be found in the licenses directory at the root of this repository, also available at
+// https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+
 package client
 
 import (
@@ -8,7 +13,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
@@ -95,7 +99,7 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 			// Append certs to the global certs
 			ok := rootCAs.AppendCertsFromPEM(rootPem)
 			if !ok {
-				fmt.Errorf("error adding cert (%s) to pool, error: %s", path, err.Error())
+				fmt.Errorf("error adding cert (%s) to pool, please check format of the certs provided.", path)
 				continue
 			}
 			fmt.Printf("successfully added cert at: %s to root certs", path)
@@ -152,12 +156,12 @@ func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*
 }
 
 // DownloadLink returns a list of links where the relevant agent artifacts can be downloaded
-func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, framework string) ([]types.DownloadLink, error) {
-	if err := c.validateDownloadLinkArgs(language); err != nil {
-		return []types.DownloadLink{}, err
-	}
-	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework)
+func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, framework, version, env string) ([]types.DownloadLink, error) {
 	var resp []types.DownloadLink
+	if err := c.validateDownloadLinkArgs(language); err != nil {
+		return resp, err
+	}
+	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework, version, env)
 	_, err := c.do(ctx, c.Endpoint+path, "GET", "", nil, &resp) //nolint:bodyclose
 	return resp, err
 }
@@ -168,13 +172,6 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 	if err := c.validateSelectTestsArgs(stepID, source, target); err != nil {
 		return resp, err
 	}
-	if source == "" {
-		return resp, fmt.Errorf("source branch is not set")
-	}
-	if target == "" {
-		return resp, fmt.Errorf("target branch is not set")
-	}
-
 	path := fmt.Sprintf(testEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp) //nolint:bodyclose
 	return resp, err
@@ -185,13 +182,6 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 	if err := c.validateUploadCgArgs(stepID, source, target); err != nil {
 		return err
 	}
-	if source == "" {
-		return fmt.Errorf("source branch is not set")
-	}
-	if target == "" {
-		return fmt.Errorf("target branch is not set")
-	}
-
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs)
 	backoff := createBackoff(45 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, backoff)
@@ -260,7 +250,6 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 	if in != nil {
 		buf := new(bytes.Buffer)
 		if err := json.NewEncoder(buf).Encode(in); err != nil {
-			logrus.WithError(err).WithField("in", in).Errorln("failed to encode input")
 			return nil, err
 		}
 		r = buf
@@ -283,8 +272,7 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 		defer func() {
 			// drain the response body so we can reuse
 			// this connection.
-			if _, cerr := io.Copy(io.Discard, io.LimitReader(res.Body, 4096)); cerr != nil { //nolint:gomnd
-				logrus.WithError(cerr).Errorln("failed to drain response body")
+			if _, cerr := io.Copy(io.Discard, io.LimitReader(res.Body, 4096)); cerr != nil {
 			}
 			res.Body.Close()
 		}()
@@ -469,8 +457,5 @@ func (c *HTTPClient) validateGetTestTimesArgs() error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
-	if err := c.validateBasicArgs(); err != nil {
-		return err
-	}
-	return nil
+	return c.validateBasicArgs()
 }

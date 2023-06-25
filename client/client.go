@@ -29,7 +29,7 @@ type Client interface {
 	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
 	// DownloadLink returns a list of links where the relevant agent artifacts can be downloaded
-	DownloadLink(ctx context.Context, language, os, arch, framework string) ([]types.DownloadLink, error)
+	DownloadLink(ctx context.Context, language, os, arch, framework, version, env string) ([]types.DownloadLink, error)
 
 	// GetTestTimes returns the test timing data
 	GetTestTimes(ctx context.Context, in *types.GetTestTimesReq) (types.GetTestTimesResp, error)
