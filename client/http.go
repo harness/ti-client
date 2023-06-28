@@ -151,7 +151,8 @@ func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*
 		return err
 	}
 	path := fmt.Sprintf(dbEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, report, c.Repo, c.Sha, c.CommitLink)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, &tests, nil) //nolint:bodyclose
+	backoff := createBackoff(10 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &tests, nil, false, false, backoff) //nolint:bodyclose
 	return err
 }
 
@@ -162,7 +163,8 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 		return resp, err
 	}
 	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework, version, env)
-	_, err := c.do(ctx, c.Endpoint+path, "GET", "", nil, &resp) //nolint:bodyclose
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 
@@ -173,7 +175,8 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 		return resp, err
 	}
 	path := fmt.Sprintf(testEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp) //nolint:bodyclose
+	backoff := createBackoff(10 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp, false, false, backoff) //nolint:bodyclose
 	return resp, err
 }
 
@@ -184,7 +187,7 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 	}
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs)
 	backoff := createBackoff(45 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, backoff)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, true, backoff) //nolint:bodyclose
 	return err
 }
 
@@ -195,11 +198,12 @@ func (c *HTTPClient) GetTestTimes(ctx context.Context, in *types.GetTestTimesReq
 		return resp, err
 	}
 	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", "", in, &resp) //nolint:bodyclose
+	backoff := createBackoff(10 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 
-func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, out interface{}, isOpen bool, b backoff.BackOff) (*http.Response, error) {
+func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, out interface{}, isOpen, retryOnServerErrors bool, b backoff.BackOff) (*http.Response, error) {
 	for {
 		var res *http.Response
 		var err error
@@ -217,7 +221,7 @@ func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, ou
 
 		duration := b.NextBackOff()
 
-		if res != nil {
+		if res != nil && retryOnServerErrors {
 			// Check the response code. We retry on 5xx-range
 			// responses to allow the server time to recover, as
 			// 5xx's are typically not permanent errors and may
