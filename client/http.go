@@ -31,6 +31,7 @@ const (
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d"
 	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
+	commitInfoEndpoint 	  = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -200,6 +201,18 @@ func (c *HTTPClient) GetTestTimes(ctx context.Context, in *types.GetTestTimesReq
 	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
+	return resp, err
+}
+
+// UploadCg uploads avro encoded callgraph to server
+func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error) {
+	var resp types.CommitInfoResp
+	if err := c.validateCommitInfoArgs(stepID, branch); err != nil {
+		return resp, err
+	}
+	path := fmt.Sprintf(commitInfoEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, branch)
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 
@@ -462,4 +475,26 @@ func (c *HTTPClient) validateGetTestTimesArgs() error {
 		return err
 	}
 	return c.validateBasicArgs()
+}
+
+func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
+	}
+	if branch == "" {
+		return fmt.Errorf("source branch is not set")
+	}
+	return nil
 }
