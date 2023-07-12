@@ -176,6 +176,7 @@ type SelectTestsReq struct {
 	// maintain stats even when all the tests are run.
 	SelectAll    bool     `json:"select_all"`
 	Files        []File   `json:"files"`
+	SourceBranch string   `json:"source_branch"`
 	TargetBranch string   `json:"target_branch"`
 	Repo         string   `json:"repo"`
 	TiConfig     TiConfig `json:"ti_config"`
