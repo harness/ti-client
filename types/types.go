@@ -297,5 +297,5 @@ type GetCgCountResp struct {
 }
 
 type CommitInfoResp struct {
-	LastSuccessfullCommitId string `json:"commit_id"`
+	LastSuccessfulCommitId string `json:"commit_id"`
 }
