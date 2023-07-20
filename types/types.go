@@ -176,6 +176,7 @@ type SelectTestsReq struct {
 	// maintain stats even when all the tests are run.
 	SelectAll    bool     `json:"select_all"`
 	Files        []File   `json:"files"`
+	SourceBranch string   `json:"source_branch"`
 	TargetBranch string   `json:"target_branch"`
 	Repo         string   `json:"repo"`
 	TiConfig     TiConfig `json:"ti_config"`
@@ -287,9 +288,14 @@ type GetVgResp struct {
 type GetCgCountReq struct {
 	Repo   string `json:"repo""`
 	Branch string `json:"branch"`
+	SearchPushCollections bool `json:"search_push_collections"`
 }
 
 type GetCgCountResp struct {
 	NodeCount     int `json:"node_count""`
 	RelationCount int `json:"relation_count"`
+}
+
+type CommitInfoResp struct {
+	LastSuccessfulCommitId string `json:"commit_id"`
 }
