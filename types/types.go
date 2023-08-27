@@ -180,9 +180,8 @@ type SelectTestsReq struct {
 	TargetBranch string   `json:"target_branch"`
 	Repo         string   `json:"repo"`
 	TiConfig     TiConfig `json:"ti_config"`
-	// Globs to filter tests on
-	TestGlobs []string `json:"test_globs"`
-	Language  string   `json:"language"`
+	TestGlobs    []string `json:"test_globs"`
+	Language     string   `json:"language"`
 }
 
 type SelectionDetails struct {
