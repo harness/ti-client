@@ -180,6 +180,9 @@ type SelectTestsReq struct {
 	TargetBranch string   `json:"target_branch"`
 	Repo         string   `json:"repo"`
 	TiConfig     TiConfig `json:"ti_config"`
+	// Globs to filter tests on
+	TestGlobs []string `json:"test_globs"`
+	Language  string   `json:"language"`
 }
 
 type SelectionDetails struct {
@@ -286,9 +289,9 @@ type GetVgResp struct {
 }
 
 type GetCgCountReq struct {
-	Repo   string `json:"repo""`
-	Branch string `json:"branch"`
-	SearchPushCollections bool `json:"search_push_collections"`
+	Repo                  string `json:"repo""`
+	Branch                string `json:"branch"`
+	SearchPushCollections bool   `json:"search_push_collections"`
 }
 
 type GetCgCountResp struct {
