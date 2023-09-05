@@ -183,7 +183,7 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 
 // UploadCg uploads avro encoded callgraph to server
 func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte) error {
-	if err := c.validateUploadCgArgs(stepID, source, target); err != nil {
+	if err := c.validateUploadCgArgs(stepID, source, target, cg); err != nil {
 		return err
 	}
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs)
@@ -445,7 +445,7 @@ func (c *HTTPClient) validateSelectTestsArgs(stepID, source, target string) erro
 	return nil
 }
 
-func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string) error {
+func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string, cg []byte) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
@@ -466,6 +466,9 @@ func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string) error {
 	}
 	if target == "" {
 		return fmt.Errorf("target branch is not set")
+	}
+	if len(cg) == 0 {
+		return fmt.Errorf("callgraph is empty")
 	}
 	return nil
 }
