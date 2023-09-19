@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -31,7 +32,8 @@ const (
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d"
 	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
-	commitInfoEndpoint 	  = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
+	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
+	healthzEndpoint       = "/healthz"
 )
 
 // defaultClient is the default http.Client.
@@ -43,6 +45,7 @@ var defaultClient = &http.Client{
 
 // NewHTTPClient returns a new HTTPClient.
 func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, buildID, stageID, repo, sha, commitLink string, skipverify bool, additionalCertsDir string) *HTTPClient {
+	endpoint = strings.TrimSuffix(endpoint, "/")
 	client := &HTTPClient{
 		Endpoint:   endpoint,
 		Token:      token,
@@ -214,6 +217,19 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
+}
+
+// Healthz pings the healthz endpoint
+func (c *HTTPClient) Healthz(ctx context.Context) error {
+	response, err := c.do(ctx, c.Endpoint+healthzEndpoint, "GET", "", nil, nil)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("TI Healthz Ping failed. Status Code:%s", response.Status)
+	}
+	fmt.Printf("TI Healthz ping success")
+	return nil
 }
 
 func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, out interface{}, isOpen, retryOnServerErrors bool, b backoff.BackOff) (*http.Response, error) {

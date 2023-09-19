@@ -36,4 +36,7 @@ type Client interface {
 
 	// CommitInfo returns the commit id of the last successful commit of a branch for which there is a callgraph
 	CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error)
+
+	//Healthz pings the healthz endpoint
+	Healthz(ctx context.Context) error
 }
