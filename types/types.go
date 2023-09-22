@@ -280,6 +280,7 @@ type GetVgReq struct {
 	Limit        int64
 	Class        string
 	DiffFiles    []File
+	Language     string
 }
 
 type GetVgResp struct {
