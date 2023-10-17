@@ -250,12 +250,12 @@ func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, ou
 
 		duration := b.NextBackOff()
 
-		if res != nil && retryOnServerErrors {
+		if res != nil {
 			// Check the response code. We retry on 5xx-range
 			// responses to allow the server time to recover, as
 			// 5xx's are typically not permanent errors and may
 			// relate to outages on the server side.
-			if res.StatusCode >= 500 {
+			if res.StatusCode >= 500 && retryOnServerErrors {
 				// TI server error: Reconnect and retry
 				if duration == backoff.Stop {
 					return nil, err
