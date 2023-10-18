@@ -289,13 +289,13 @@ type GetVgResp struct {
 }
 
 type GetCgCountReq struct {
-	Repo                  string `json:"repo""`
+	Repo                  string `json:"repo"`
 	Branch                string `json:"branch"`
 	SearchPushCollections bool   `json:"search_push_collections"`
 }
 
 type GetCgCountResp struct {
-	NodeCount     int `json:"node_count""`
+	NodeCount     int `json:"node_count"`
 	RelationCount int `json:"relation_count"`
 }
 

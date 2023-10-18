@@ -85,7 +85,7 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 
 		files, err := os.ReadDir(additionalCertsDir)
 		if err != nil {
-			fmt.Errorf("could not read directory %s, error: %s", additionalCertsDir, err)
+			fmt.Printf("could not read directory %s, error: %s\n", additionalCertsDir, err)
 			client.Client = clientWithRootCAs(skipverify, rootCAs)
 			return client
 		}
@@ -97,16 +97,16 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 			// Create TLS config using cert PEM
 			rootPem, err := os.ReadFile(path)
 			if err != nil {
-				fmt.Errorf("could not read certificate file (%s), error: %s", path, err.Error())
+				fmt.Printf("could not read certificate file (%s), error: %s\n", path, err.Error())
 				continue
 			}
 			// Append certs to the global certs
 			ok := rootCAs.AppendCertsFromPEM(rootPem)
 			if !ok {
-				fmt.Errorf("error adding cert (%s) to pool, please check format of the certs provided.", path)
+				fmt.Printf("error adding cert (%s) to pool, please check format of the certs provided.\n", path)
 				continue
 			}
-			fmt.Printf("successfully added cert at: %s to root certs", path)
+			fmt.Printf("successfully added cert at: %s to root certs\n", path)
 		}
 		client.Client = clientWithRootCAs(skipverify, rootCAs)
 	}
@@ -228,7 +228,6 @@ func (c *HTTPClient) Healthz(ctx context.Context) error {
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("TI Healthz Ping failed. Status Code:%s", response.Status)
 	}
-	fmt.Printf("TI Healthz ping success")
 	return nil
 }
 
@@ -250,12 +249,12 @@ func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, ou
 
 		duration := b.NextBackOff()
 
-		if res != nil && retryOnServerErrors {
+		if res != nil {
 			// Check the response code. We retry on 5xx-range
 			// responses to allow the server time to recover, as
 			// 5xx's are typically not permanent errors and may
 			// relate to outages on the server side.
-			if res.StatusCode >= 500 {
+			if res.StatusCode >= 500 && retryOnServerErrors {
 				// TI server error: Reconnect and retry
 				if duration == backoff.Stop {
 					return nil, err
