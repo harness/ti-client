@@ -306,8 +306,6 @@ type CommitInfoResp struct {
 // ML Based Test Selection Request and Response
 type MLSelectTestsRequest struct {
 	MLServiceAPIRequest MLServiceAPIRequest `json:"ml_service_api_request"`
-	GitInfo             GitInfo             `json:"git_info"`
-	HarnessMlKey        string              `json:"harness_ml_key"`
 	Percentile          int                 `json:"percentile"`
 }
 
@@ -324,17 +322,6 @@ type MLServiceAPIRequest struct {
 	PRAdditions  int      `json:"pr_additions"`
 	PRDeletions  int      `json:"pr_deletions"`
 	Authors      string   `json:"authors"`
-}
-
-type GitInfo struct {
-	TargetBranch string `json:"target_branch"`
-	SourceBranch string `json:"source_branch"`
-	RepoLink     string `json:"repo_link"`
-	RepoName     string `json:"repo_name"`
-	Author       string `json:"author_name"`
-	ScmProvider  string `json:"scm_provider"`
-	BuildEvent   string `json:"build_event"`
-	PRNumber     int    `json:"pull_request_number"`
 }
 
 type MLSelectTestsResponse struct {
