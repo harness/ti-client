@@ -33,6 +33,7 @@ const (
 	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
+	mlSelectTestsEndpoint = "/ml/select_tests?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%smlKey=%s&target=%s"
 	healthzEndpoint       = "/healthz"
 )
 
@@ -216,6 +217,18 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 	path := fmt.Sprintf(commitInfoEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, branch)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
+	return resp, err
+}
+
+// UploadCg uploads avro encoded callgraph to server
+func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error) {
+	var resp types.MLSelectTestsResponse
+	if err := c.validateCommitInfoArgs(stepID, branch); err != nil {
+		return resp, err
+	}
+	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, mlKey, branch)
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 
