@@ -223,7 +223,7 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 // UploadCg uploads avro encoded callgraph to server
 func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error) {
 	var resp types.MLSelectTestsResponse
-	if err := c.validateCommitInfoArgs(stepID, branch); err != nil {
+	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
 	}
 	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, mlKey, branch)
@@ -525,4 +525,11 @@ func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
 		return fmt.Errorf("source branch is not set")
 	}
 	return nil
+}
+
+func (c *HTTPClient) validateMLSelectTestArgs() error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	return c.validateBasicArgs()
 }
