@@ -302,3 +302,28 @@ type GetCgCountResp struct {
 type CommitInfoResp struct {
 	LastSuccessfulCommitId string `json:"commit_id"`
 }
+
+// ML Based Test Selection Request and Response
+type MLSelectTestsRequest struct {
+	MLServiceAPIRequest MLServiceAPIRequest `json:"ml_service_api_request"`
+	Percentile          int                 `json:"percentile"`
+}
+
+type MLServiceAPIRequest struct {
+	ProjectDir   string   `json:"project_dir"`
+	RunID        string   `json:"run_id"`
+	UseCached    bool     `json:"use_cached"`
+	ChangedFiles []string `json:"changed_files"`
+	PRID         int      `json:"pr_id"`
+	ClassName    []string `json:"class_name"`
+	MethodName   []string `json:"method_name"`
+	TimeCreated  string   `json:"time_created"`
+	PRCommits    int      `json:"pr_commits"`
+	PRAdditions  int      `json:"pr_additions"`
+	PRDeletions  int      `json:"pr_deletions"`
+	Authors      string   `json:"authors"`
+}
+
+type MLSelectTestsResponse struct {
+	SelectedTests []string `json:"selected_tests"` // Filenames of selected tests
+}
