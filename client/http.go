@@ -34,6 +34,7 @@ const (
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&mlKey=%s&target=%s"
+	summaryEndpoint       = "reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
 	healthzEndpoint       = "/healthz"
 )
 
@@ -229,6 +230,38 @@ func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, branch st
 	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, mlKey, branch)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
+	return resp, err
+}
+
+func (c *HTTPClient) Summary(ctx context.Context, allStages bool, orgID, projectID, pipelineID, buildID, stageID, stepID, reportType string) (types.SummaryResponse, error) {
+	var resp types.SummaryResponse
+	if err := c.validateSummaryArgs(); err != nil {
+		return resp, err
+	}
+	if orgID == "" {
+		orgID = c.OrgID
+	}
+	if projectID == "" {
+		projectID = c.ProjectID
+	}
+	if pipelineID == "" {
+		pipelineID = c.PipelineID
+	}
+	if buildID == "" {
+		buildID = c.BuildID
+	}
+	if reportType == "" {
+		reportType = "junit"
+	}
+
+	if allStages {
+		stageID = ""
+		stepID = ""
+	}
+
+	path := fmt.Sprintf(summaryEndpoint, c.AccountID, orgID, projectID, pipelineID, buildID, stageID, stepID, reportType)
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 
@@ -528,6 +561,13 @@ func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
 }
 
 func (c *HTTPClient) validateMLSelectTestArgs() error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	return c.validateBasicArgs()
+}
+
+func (c *HTTPClient) validateSummaryArgs() error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}

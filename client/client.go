@@ -40,6 +40,9 @@ type Client interface {
 	// MLSelectTests returns 
 	MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error)
 
+	// Summary API
+	Summary(ctx context.Context, stepID, reportType string) (types.SummaryResponse, error)
+
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
 }
