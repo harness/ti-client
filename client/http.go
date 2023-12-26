@@ -34,7 +34,7 @@ const (
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&mlKey=%s&target=%s"
-	summaryEndpoint       = "reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
+	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
 	healthzEndpoint       = "/healthz"
 )
 
