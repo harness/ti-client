@@ -37,11 +37,14 @@ type Client interface {
 	// CommitInfo returns the commit id of the last successful commit of a branch for which there is a callgraph
 	CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error)
 
-	// MLSelectTests returns 
+	// MLSelectTests returns
 	MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error)
 
 	// Summary API
-	Summary(ctx context.Context, allStages bool, orgID, projectID, pipelineID, buildID, stageID, stepID, reportType string) (types.SummaryResponse, error)
+	Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error)
+
+	// GetTestCases
+	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
 
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error

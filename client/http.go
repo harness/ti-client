@@ -35,6 +35,7 @@ const (
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&mlKey=%s&target=%s"
 	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
+	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
 )
 
@@ -233,33 +234,29 @@ func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, branch st
 	return resp, err
 }
 
-func (c *HTTPClient) Summary(ctx context.Context, allStages bool, orgID, projectID, pipelineID, buildID, stageID, stepID, reportType string) (types.SummaryResponse, error) {
+func (c *HTTPClient) Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error) {
 	var resp types.SummaryResponse
-	if err := c.validateSummaryArgs(); err != nil {
+	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
 	}
-	if orgID == "" {
-		orgID = c.OrgID
-	}
-	if projectID == "" {
-		projectID = c.ProjectID
-	}
-	if pipelineID == "" {
-		pipelineID = c.PipelineID
-	}
-	if buildID == "" {
-		buildID = c.BuildID
-	}
-	if reportType == "" {
-		reportType = "junit"
+
+	c.SetBasicArguments(&summaryRequest)
+
+	path := fmt.Sprintf(summaryEndpoint, c.AccountID, summaryRequest.OrgID, summaryRequest.ProjectID, summaryRequest.PipelineID, summaryRequest.BuildID, summaryRequest.StageID, summaryRequest.StepID, summaryRequest.ReportType)
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
+	return resp, err
+}
+
+func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error) {
+	var resp types.TestCases
+	if err := c.validateMLSelectTestArgs(); err != nil {
+		return resp, err
 	}
 
-	if allStages {
-		stageID = ""
-		stepID = ""
-	}
+	c.SetBasicArguments(&testCasesRequest.BasicInfo)
 
-	path := fmt.Sprintf(summaryEndpoint, c.AccountID, orgID, projectID, pipelineID, buildID, stageID, stepID, reportType)
+	path := fmt.Sprintf(testCasesEndpoint, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -567,9 +564,25 @@ func (c *HTTPClient) validateMLSelectTestArgs() error {
 	return c.validateBasicArgs()
 }
 
-func (c *HTTPClient) validateSummaryArgs() error {
-	if err := c.validateTiArgs(); err != nil {
-		return err
+func (c *HTTPClient) SetBasicArguments(summaryRequest *types.SummaryRequest) {
+	if summaryRequest.OrgID == "" {
+		summaryRequest.OrgID = c.OrgID
 	}
-	return c.validateBasicArgs()
+	if summaryRequest.ProjectID == "" {
+		summaryRequest.ProjectID = c.ProjectID
+	}
+	if summaryRequest.PipelineID == "" {
+		summaryRequest.PipelineID = c.PipelineID
+	}
+	if summaryRequest.BuildID == "" {
+		summaryRequest.BuildID = c.BuildID
+	}
+	if summaryRequest.ReportType == "" {
+		summaryRequest.ReportType = "junit"
+	}
+
+	if summaryRequest.AllStages {
+		summaryRequest.StageID = ""
+		summaryRequest.StepID = ""
+	}
 }

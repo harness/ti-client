@@ -122,6 +122,27 @@ type TestSummary struct {
 	Status Status `json:"status"`
 }
 
+type SummaryRequest struct {
+	AllStages  bool
+	OrgID      string
+	ProjectID  string
+	PipelineID string
+	BuildID    string
+	StageID    string
+	StepID     string
+	ReportType string
+}
+
+type TestCasesRequest struct {
+	BasicInfo          SummaryRequest
+	TestCaseSearchTerm string
+	Sort               string
+	Order              string
+	PageIndex          string
+	PageSize           string
+	SuiteName          string
+}
+
 type SummaryResponse struct {
 	TotalTests      int   `json:"total_tests"`
 	FailedTests     int   `json:"failed_tests"`
