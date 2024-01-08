@@ -37,7 +37,7 @@ type Client interface {
 	// CommitInfo returns the commit id of the last successful commit of a branch for which there is a callgraph
 	CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error)
 
-	// MLSelectTests returns
+	// MLSelectTests returns list of tests which should be run intelligently using ML Based TI
 	MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error)
 
 	// Summary returns the summary about test execution information for a build
