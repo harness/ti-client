@@ -40,10 +40,10 @@ type Client interface {
 	// MLSelectTests returns
 	MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error)
 
-	// Summary API
+	// Summary returns the summary about test execution information for a build
 	Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error)
 
-	// GetTestCases
+	// GetTestCases returns the testcases executed in a build
 	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
 
 	//Healthz pings the healthz endpoint
