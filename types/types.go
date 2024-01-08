@@ -328,6 +328,7 @@ type CommitInfoResp struct {
 type MLSelectTestsRequest struct {
 	MLServiceAPIRequest MLServiceAPIRequest `json:"ml_service_api_request"`
 	Percentile          int                 `json:"percentile"`
+	Files               []File              `json:"files"`
 }
 
 type MLServiceAPIRequest struct {
