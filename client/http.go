@@ -33,7 +33,7 @@ const (
 	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
-	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&mlKey=%s&target=%s"
+	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s"
 	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
 	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
@@ -223,12 +223,12 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 }
 
 // UploadCg uploads avro encoded callgraph to server
-func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, branch string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error) {
+func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, source, target string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error) {
 	var resp types.MLSelectTestsResponse
 	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, mlKey, branch)
+	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, mlKey)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
