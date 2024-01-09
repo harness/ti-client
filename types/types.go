@@ -326,7 +326,7 @@ type CommitInfoResp struct {
 
 // ML Based Test Selection Request and Response
 type MLSelectTestsRequest struct {
-	SelectAll    bool     `json:"select_all"`
+	SelectAll           bool                `json:"select_all"`
 	MLServiceAPIRequest MLServiceAPIRequest `json:"ml_service_api_request"`
 	Percentile          int                 `json:"percentile"`
 	Files               []File              `json:"files"`
