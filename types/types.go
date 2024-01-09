@@ -236,7 +236,8 @@ type DownloadLink struct {
 //	  - config.sh
 type TiConfig struct {
 	Config struct {
-		Ignore []string `json:"ignore"`
+		Ignore    []string `json:"ignore"`
+		SkipBazel bool     `json:"skipBazel"`
 	}
 }
 
