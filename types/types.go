@@ -346,7 +346,3 @@ type MLServiceAPIRequest struct {
 	PRDeletions  int      `json:"pr_deletions"`
 	Authors      string   `json:"authors"`
 }
-
-type MLSelectTestsResponse struct {
-	SelectedTests []string `json:"selected_tests"` // Filenames of selected tests
-}

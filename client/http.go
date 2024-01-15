@@ -223,8 +223,8 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 }
 
 // UploadCg uploads avro encoded callgraph to server
-func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, source, target string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error) {
-	var resp types.MLSelectTestsResponse
+func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, source, target string, in *types.MLSelectTestsRequest) (types.SelectTestsResp, error) {
+	var resp types.SelectTestsResp
 	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
 	}
