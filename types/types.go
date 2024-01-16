@@ -330,6 +330,7 @@ type MLSelectTestsRequest struct {
 	MLServiceAPIRequest MLServiceAPIRequest `json:"ml_service_api_request"`
 	Percentile          int                 `json:"percentile"`
 	Files               []File              `json:"files"`
+	Specs               map[string]string   `json:"specs"`
 }
 
 type MLServiceAPIRequest struct {
@@ -345,8 +346,4 @@ type MLServiceAPIRequest struct {
 	PRAdditions  int      `json:"pr_additions"`
 	PRDeletions  int      `json:"pr_deletions"`
 	Authors      string   `json:"authors"`
-}
-
-type MLSelectTestsResponse struct {
-	SelectedTests []string `json:"selected_tests"` // Filenames of selected tests
 }

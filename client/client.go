@@ -38,7 +38,7 @@ type Client interface {
 	CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error)
 
 	// MLSelectTests returns list of tests which should be run intelligently using ML Based TI
-	MLSelectTests(ctx context.Context, stepID, mlKey, source, target string, in *types.MLSelectTestsRequest) (types.MLSelectTestsResponse, error)
+	MLSelectTests(ctx context.Context, stepID, mlKey, source, target string, in *types.MLSelectTestsRequest) (types.SelectTestsResp, error)
 
 	// Summary returns the summary about test execution information for a build
 	Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error)
