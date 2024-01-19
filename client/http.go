@@ -229,8 +229,7 @@ func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, source, t
 		return resp, err
 	}
 	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, mlKey)
-	backoff := createBackoff(5 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
+	_, err := c.do(ctx, c.Endpoint+path, "POST", "", in, &resp) //nolint:bodyclose
 	return resp, err
 }
 
