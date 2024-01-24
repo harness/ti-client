@@ -334,6 +334,7 @@ type MLSelectTestsRequest struct {
 	Percentile          int                 `json:"percentile"`
 	Files               []File              `json:"files"`
 	Specs               map[string]string   `json:"specs"`
+	TestRunner          string              `json:"test_runner"`
 }
 
 type MLServiceAPIRequest struct {
