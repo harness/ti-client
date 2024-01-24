@@ -231,15 +231,16 @@ type DownloadLink struct {
 // Sample YAML:
 // config:
 //
-//	ignore:
-//	  - README.md
-//	  - config.sh
-//  bazelOptimization: true
+//			ignore:
+//			  - README.md
+//			  - config.sh
+//		    enableBazelOptimization: true
+//	        bazelFileCountThreshold: 100
 type TiConfig struct {
 	Config struct {
-		Ignore            []string `json:"ignore"`
-		BazelOptimization bool     `yaml:"enableBazelOptimization"`
-		BazelFileCountThreshold    int   `yaml:"bazelFileCountThreshold"`
+		Ignore                  []string `json:"ignore"`
+		BazelOptimization       bool     `yaml:"enableBazelOptimization"`
+		BazelFileCountThreshold int      `yaml:"bazelFileCountThreshold"`
 	}
 }
 
