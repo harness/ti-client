@@ -48,4 +48,7 @@ type Client interface {
 
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
+
+	// WriteSavings writes time savings for a step/feature to TI server
+	WriteSavings(ctx context.Context, stepID, feature string, cacheState types.IntelligenceExecutionState, timeTakenMs int64) error
 }
