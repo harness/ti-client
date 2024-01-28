@@ -265,12 +265,12 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 }
 
 // WriteSavings writes time savings for a step/feature to TI server
-func (c *HTTPClient) WriteSavings(ctx context.Context, stepID, feature string, cacheState types.IntelligenceExecutionState, timeTakenMs int64) error {
-	if err := c.validateWriteSavingsArgs(stepID, feature); err != nil {
+func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, feature types.SavingsFeature, cacheState types.IntelligenceExecutionState, timeTakenMs int64) error {
+	if err := c.validateWriteSavingsArgs(stepID); err != nil {
 		return err
 	}
 	timeTakenMsStr := strconv.Itoa(int(timeTakenMs))
-	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, feature, string(cacheState), timeTakenMsStr)
+	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, string(feature), string(cacheState), timeTakenMsStr)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", nil, nil) //nolint:bodyclose
 	return err
 }
@@ -481,7 +481,7 @@ func (c *HTTPClient) validateWriteArgs(stepID, report string) error {
 	return nil
 }
 
-func (c *HTTPClient) validateWriteSavingsArgs(stepID, feature string) error {
+func (c *HTTPClient) validateWriteSavingsArgs(stepID string) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
@@ -496,9 +496,6 @@ func (c *HTTPClient) validateWriteSavingsArgs(stepID, feature string) error {
 	}
 	if stepID == "" {
 		return fmt.Errorf("stepID is not set")
-	}
-	if feature == "" {
-		return fmt.Errorf("feature is not set")
 	}
 	return nil
 }
