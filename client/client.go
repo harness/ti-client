@@ -50,5 +50,5 @@ type Client interface {
 	Healthz(ctx context.Context) error
 
 	// WriteSavings writes time savings for a step/feature to TI server
-	WriteSavings(ctx context.Context, stepID string, feature types.SavingsFeature, cacheState types.IntelligenceExecutionState, timeTakenMs int64) error
+	WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64) error
 }

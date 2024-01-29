@@ -39,7 +39,7 @@ const (
 	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
 	// savings
-	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&feature=%s&cacheState=%s&timeMs=%s"
+	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -265,12 +265,12 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 }
 
 // WriteSavings writes time savings for a step/feature to TI server
-func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, feature types.SavingsFeature, cacheState types.IntelligenceExecutionState, timeTakenMs int64) error {
+func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64) error {
 	if err := c.validateWriteSavingsArgs(stepID); err != nil {
 		return err
 	}
 	timeTakenMsStr := strconv.Itoa(int(timeTakenMs))
-	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, string(feature), string(cacheState), timeTakenMsStr)
+	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", nil, nil) //nolint:bodyclose
 	return err
 }
