@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +38,8 @@ const (
 	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
 	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
+	// savings
+	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -261,6 +264,17 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 	return resp, err
 }
 
+// WriteSavings writes time savings for a step/feature to TI server
+func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64) error {
+	if err := c.validateWriteSavingsArgs(stepID); err != nil {
+		return err
+	}
+	timeTakenMsStr := strconv.Itoa(int(timeTakenMs))
+	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
+	_, err := c.do(ctx, c.Endpoint+path, "POST", "", nil, nil) //nolint:bodyclose
+	return err
+}
+
 // Healthz pings the healthz endpoint
 func (c *HTTPClient) Healthz(ctx context.Context) error {
 	response, err := c.do(ctx, c.Endpoint+healthzEndpoint, "GET", "", nil, nil)
@@ -463,6 +477,25 @@ func (c *HTTPClient) validateWriteArgs(stepID, report string) error {
 	}
 	if report == "" {
 		return fmt.Errorf("report is not set")
+	}
+	return nil
+}
+
+func (c *HTTPClient) validateWriteSavingsArgs(stepID string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
 	}
 	return nil
 }
