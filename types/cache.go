@@ -12,4 +12,5 @@ type SavingsFeature string
 
 const (
 	BUILD_CACHE SavingsFeature = "build_cache"
+	TI          SavingsFeature = "test_intelligence"
 )
