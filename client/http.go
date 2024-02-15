@@ -31,7 +31,7 @@ const (
 	dbEndpoint            = "/reports/write?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&repo=%s&sha=%s&commitLink=%s"
 	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s"
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d"
-	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s"
+	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s"
@@ -202,12 +202,12 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 }
 
 // GetTestTimes gets test timing data
-func (c *HTTPClient) GetTestTimes(ctx context.Context, in *types.GetTestTimesReq) (types.GetTestTimesResp, error) {
+func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq) (types.GetTestTimesResp, error) {
 	var resp types.GetTestTimesResp
-	if err := c.validateGetTestTimesArgs(); err != nil {
+	if err := c.validateGetTestTimesArgs(stepID); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID)
+	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -560,11 +560,23 @@ func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string) error {
 	return nil
 }
 
-func (c *HTTPClient) validateGetTestTimesArgs() error {
+func (c *HTTPClient) validateGetTestTimesArgs(stepID string) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
-	return c.validateBasicArgs()
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if c.BuildID == "" {
+		return fmt.Errorf("buildID is not set")
+	}
+	if c.StageID == "" {
+		return fmt.Errorf("stageID is not set")
+	}
+	if stepID == "" {
+		return fmt.Errorf("stepID is not set")
+	}
+	return nil
 }
 
 func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
