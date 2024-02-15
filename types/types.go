@@ -62,6 +62,9 @@ const (
 
 	// StepIDEnv represents the environment variable for Step ID of the step
 	StepIDEnv = "HARNESS_STEP_ID"
+	
+	// BuildIDEnv represents the environment variable for Build ID of the pipeline execution
+	BuildIDEnv = "HARNESS_BUILD_ID"
 
 	// TiSvcEp represents the environment variable for TI service endpoint
 	TiSvcEp = "HARNESS_TI_SERVICE_ENDPOINT"
