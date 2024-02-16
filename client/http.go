@@ -204,7 +204,7 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 // GetTestTimes gets test timing data
 func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq) (types.GetTestTimesResp, error) {
 	var resp types.GetTestTimesResp
-	if err := c.validateGetTestTimesArgs(stepID); err != nil {
+	if err := c.validateGetTestTimesArgs(); err != nil {
 		return resp, err
 	}
 	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID)
@@ -560,23 +560,11 @@ func (c *HTTPClient) validateUploadCgArgs(stepID, source, target string) error {
 	return nil
 }
 
-func (c *HTTPClient) validateGetTestTimesArgs(stepID string) error {
+func (c *HTTPClient) validateGetTestTimesArgs() error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
-	if err := c.validateBasicArgs(); err != nil {
-		return err
-	}
-	if c.BuildID == "" {
-		return fmt.Errorf("buildID is not set")
-	}
-	if c.StageID == "" {
-		return fmt.Errorf("stageID is not set")
-	}
-	if stepID == "" {
-		return fmt.Errorf("stepID is not set")
-	}
-	return nil
+	return c.validateBasicArgs()
 }
 
 func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
