@@ -18,3 +18,7 @@ type Profile struct {
 	BuildTimeMs         int64  `json:"build_time_ms"`
 	TaskExecutionTimeMs int64  `json:"task_execution_time_ms"`
 }
+
+type Metrics struct {
+	Profiles []Profile `json:"profiles"`
+}

@@ -20,5 +20,5 @@ const (
 )
 
 type SavingsRequest struct {
-	GradleProfile gradle.Profile `json:"gradle_profile"`
+	GradleMetrics gradle.Metrics `json:"gradle_metrics"`
 }
