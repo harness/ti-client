@@ -265,13 +265,13 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 }
 
 // WriteSavings writes time savings for a step/feature to TI server
-func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64) error {
+func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64, savingsRequest types.SavingsRequest) error {
 	if err := c.validateWriteSavingsArgs(stepID); err != nil {
 		return err
 	}
 	timeTakenMsStr := strconv.Itoa(int(timeTakenMs))
 	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", "", nil, nil) //nolint:bodyclose
+	_, err := c.do(ctx, c.Endpoint+path, "POST", "", savingsRequest, nil) //nolint:bodyclose
 	return err
 }
 
