@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/harness/ti-client/types/cache/gradle"
+)
+
 type IntelligenceExecutionState string
 
 const (
@@ -14,3 +18,7 @@ const (
 	BUILD_CACHE SavingsFeature = "build_cache"
 	TI          SavingsFeature = "test_intelligence"
 )
+
+type SavingsRequest struct {
+	GradleMetrics gradle.Metrics `json:"gradle_metrics"`
+}
