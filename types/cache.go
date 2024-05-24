@@ -17,6 +17,7 @@ type SavingsFeature string
 const (
 	BUILD_CACHE SavingsFeature = "build_cache"
 	TI          SavingsFeature = "test_intelligence"
+	DLC         SavingsFeature = "docker_layer_caching"
 )
 
 type SavingsRequest struct {
