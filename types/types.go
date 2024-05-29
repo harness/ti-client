@@ -116,7 +116,12 @@ type TestSuites struct {
 }
 
 type FlakyResp struct {
-	FlakyTests []string `json:"flaky_tests"` //package.Class name
+	FlakyTests []FlakyTests `json:"flaky_tests"` //package.Class name
+}
+
+type FlakyTests struct {
+	Name      string `json:"json"`
+	Classname string `json:"class_name"`
 }
 
 type TestCase struct {
