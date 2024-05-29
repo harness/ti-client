@@ -177,6 +177,7 @@ type TestSuite struct {
 	SkippedTests int    `json:"skipped_tests"`
 	PassedTests  int    `json:"passed_tests"`
 	FailPct      int    `json:"fail_pct"`
+	Flaky        bool   `json:"flaky"`
 }
 
 // Test Intelligence specific structs
