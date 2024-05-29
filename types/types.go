@@ -115,6 +115,14 @@ type TestSuites struct {
 	Suites   []TestSuite      `json:"content"`
 }
 
+type FlaskyReq struct {
+	FlaskyReqData []TestInfo `json:"test_info"`
+}
+type TestInfo struct {
+	Name         string `json:"name"`
+	ErrorMessage string `json:"error_message"`
+}
+
 type FlakyResp struct {
 	FlakyTests []FlakyTests `json:"flaky_tests"` //package.Class name
 }
