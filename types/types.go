@@ -128,8 +128,8 @@ type FlakyResp struct {
 }
 
 type FlakyTests struct {
-	Name      string `json:"json"`
-	Classname string `json:"class_name"`
+	Name      string `json:"name"`
+	ClassName string `json:"class_name"`
 }
 
 type TestCase struct {
