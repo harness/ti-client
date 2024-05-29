@@ -62,7 +62,7 @@ const (
 
 	// StepIDEnv represents the environment variable for Step ID of the step
 	StepIDEnv = "HARNESS_STEP_ID"
-	
+
 	// BuildIDEnv represents the environment variable for Build ID of the pipeline execution
 	BuildIDEnv = "HARNESS_BUILD_ID"
 
@@ -113,6 +113,10 @@ type TestCases struct {
 type TestSuites struct {
 	Metadata ResponseMetadata `json:"data"`
 	Suites   []TestSuite      `json:"content"`
+}
+
+type FlakyResp struct {
+	FlakyTests []string `json:"flaky_tests"` //package.Class name
 }
 
 type TestCase struct {
