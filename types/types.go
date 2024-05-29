@@ -175,6 +175,7 @@ type SummaryResponse struct {
 	SuccessfulTests int   `json:"successful_tests"`
 	SkippedTests    int   `json:"skipped_tests"`
 	TimeMs          int64 `json:"duration_ms"`
+	FlakyTests      int   `json:"flaky_tests"`
 }
 
 type StepInfo struct {
