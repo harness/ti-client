@@ -141,6 +141,7 @@ type TestCase struct {
 	DurationMs int64  `json:"duration_ms"`
 	SystemOut  string `json:"stdout"`
 	SystemErr  string `json:"stderr"`
+	Flaky      bool   `json:"flaky"`
 }
 
 type TestSummary struct {
