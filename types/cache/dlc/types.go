@@ -10,7 +10,7 @@ type (
 		TotalLayers int                 `json:"total_layers"`
 		Done        int                 `json:"done"`
 		Cached      int                 `json:"cached"`
-		Errored     int                 `json:"errored"`
+		Error       int                 `json:"error"`
 		Canceled    int                 `json:"canceled"`
 		Layers      map[int]LayerStatus `json:"layers"`
 	}
