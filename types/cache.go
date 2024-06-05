@@ -34,7 +34,7 @@ type SavingsOverview struct {
 	FeatureState IntelligenceExecutionState `json:"feature_state"`
 }
 
+// This Structure will have the savings overview for each step and also detailed metrics in the future such as dlc metrics and gradle metrics
 type SavingsResponse struct {
-	Overview   []SavingsOverview `json:"overview"`
-	DlcMetrics dlc.Metrics       `json:"dlc_metrics"`
+	Overview []SavingsOverview `json:"overview"` // array of SavingsOverview since one step can have multiple savings features enabled
 }
