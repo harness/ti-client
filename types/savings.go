@@ -37,5 +37,5 @@ type SavingsOverview struct {
 // This Structure will have the savings overview for each step and also detailed metrics in the future such as dlc metrics and gradle metrics
 type SavingsResponse struct {
 	Overview    []SavingsOverview `json:"overview"` // array of SavingsOverview since one step can have multiple savings features enabled
-	DlcMetadata dlc.MetaData      `json:"dlc_metadata"`
+	DlcMetadata *dlc.MetaData     `json:"dlc_metadata"`
 }
