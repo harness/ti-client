@@ -16,7 +16,7 @@ type (
 	}
 
 	Metadata struct {
-		CachedLayers int `json:"cached_layers"`
-		TotalLayers  int `json:"total_layers"`
+		TotalLayers int `json:"total_layers"`
+		Cached      int `json:"cached"`
 	}
 )
