@@ -15,7 +15,7 @@ type (
 		Layers      map[int]LayerStatus `json:"layers"`
 	}
 
-	MetaData struct {
+	Metadata struct {
 		CachedLayers int `json:"cached_layers"`
 		TotalLayers  int `json:"total_layers"`
 	}
