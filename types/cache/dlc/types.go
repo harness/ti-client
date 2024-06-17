@@ -14,4 +14,9 @@ type (
 		Canceled    int                 `json:"canceled"`
 		Layers      map[int]LayerStatus `json:"layers"`
 	}
+
+	Metadata struct {
+		TotalLayers int `json:"total_layers"`
+		Cached      int `json:"cached"`
+	}
 )
