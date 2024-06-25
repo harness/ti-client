@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/harness/ti-client/types/cache/buildcache"
 	"github.com/harness/ti-client/types/cache/dlc"
 	"github.com/harness/ti-client/types/cache/gradle"
 )
@@ -22,8 +23,9 @@ const (
 )
 
 type SavingsRequest struct {
-	GradleMetrics gradle.Metrics `json:"gradle_metrics"`
-	DlcMetrics    dlc.Metrics    `json:"dlc_metrics"`
+	GradleMetrics      gradle.Metrics       `json:"gradle_metrics"`
+	DlcMetrics         dlc.Metrics          `json:"dlc_metrics"`
+	BuildCacheMetadata *buildcache.Metadata `json:"build_cache_metadata"`
 }
 
 type SavingsOverview struct {
