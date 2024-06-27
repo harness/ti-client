@@ -25,7 +25,6 @@ const (
 type SavingsRequest struct {
 	GradleMetrics gradle.Metrics `json:"gradle_metrics"`
 	DlcMetrics    dlc.Metrics    `json:"dlc_metrics"`
-	Metadata      string         `json:"metadata"`
 }
 
 type SavingsOverview struct {
