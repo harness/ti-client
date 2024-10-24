@@ -139,7 +139,8 @@ func clientWithTLSConfig(skipverify bool, rootCAs *x509.CertPool, mtlsEnabled bo
 	config := &tls.Config{
 		InsecureSkipVerify: skipverify,
 	}
-	if rootCAs != nil {
+	// Only use rootCAs if skipverify is false
+	if !skipverify && rootCAs != nil {
 		config.RootCAs = rootCAs
 	}
 	if mtlsEnabled {
