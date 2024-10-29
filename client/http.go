@@ -143,12 +143,15 @@ func clientWithTLSConfig(skipverify bool, rootCAs *x509.CertPool, mtlsEnabled bo
 	}
 	// Only use rootCAs if skipverify is false
 	if !skipverify && rootCAs != nil {
+		fmt.Println("Set root CA for TI")
 		config.RootCAs = rootCAs
 	}
 	if mtlsEnabled {
 		fmt.Println("Set mTLS Certs for TI")
 		config.Certificates = []tls.Certificate{cert}
 	}
+
+	config.InsecureSkipVerify = true
 
 	return &http.Client{
 		CheckRedirect: func(*http.Request, []*http.Request) error {
