@@ -67,6 +67,8 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 		SkipVerify: skipverify,
 	}
 
+	fmt.Println("Loading mTLS Certs for TI")
+
 	// Load mTLS certificates if available
 	mtlsEnabled, mtlsCerts := loadMTLSCerts("/etc/mtls/client.crt", "/etc/mtls/client.key")
 
@@ -144,6 +146,7 @@ func clientWithTLSConfig(skipverify bool, rootCAs *x509.CertPool, mtlsEnabled bo
 		config.RootCAs = rootCAs
 	}
 	if mtlsEnabled {
+		fmt.Println("Set mTLS Certs for TI")
 		config.Certificates = []tls.Certificate{cert}
 	}
 
