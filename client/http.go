@@ -147,9 +147,6 @@ func clientWithTLSConfig(skipverify bool, rootCAs *x509.CertPool, mtlsEnabled bo
 		fmt.Println("setting mTLS Client Certs in TI Service Client")
 		config.Certificates = []tls.Certificate{cert}
 	}
-
-	config.InsecureSkipVerify = true
-
 	return &http.Client{
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
