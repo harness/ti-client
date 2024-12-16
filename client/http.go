@@ -50,7 +50,7 @@ var defaultClient = &http.Client{
 }
 
 // NewHTTPClient returns a new HTTPClient with optional mTLS and custom root certificates.
-func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, buildID, stageID, repo, sha, commitLink string, skipverify bool, additionalCertsDir string) *HTTPClient {
+func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, buildID, stageID, repo, sha, commitLink string, skipverify bool, additionalCertsDir, mtlsCertsDir string) *HTTPClient {
 	endpoint = strings.TrimSuffix(endpoint, "/")
 	client := &HTTPClient{
 		Endpoint:   endpoint,
@@ -68,7 +68,7 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 	}
 
 	// Load mTLS certificates if available
-	mtlsEnabled, mtlsCerts := loadMTLSCerts("/etc/mtls/client.crt", "/etc/mtls/client.key")
+	mtlsEnabled, mtlsCerts := loadMTLSCerts(mtlsCertsDir, "/etc/mtls/client.crt", "/etc/mtls/client.key")
 
 	// Load custom root CAs if additional certificates directory is provided
 	rootCAs := loadRootCAs(additionalCertsDir)
@@ -81,8 +81,24 @@ func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, bui
 	return client
 }
 
-// loadMTLSCerts loads mTLS certificates if they exist
-func loadMTLSCerts(certFile, keyFile string) (bool, tls.Certificate) {
+// loadMTLSCerts determines the source of mTLS certificates based on base64 strings or file paths
+func loadMTLSCerts(mtlsCertsDir, defaultCertFile, defaultKeyFile string) (bool, tls.Certificate) {
+
+	// Attempt to load from specified directory
+	if mtlsCertsDir != "" {
+		certFile := filepath.Join(mtlsCertsDir, "client.crt")
+		keyFile := filepath.Join(mtlsCertsDir, "client.key")
+		if fileExists(certFile) && fileExists(keyFile) {
+			return loadMTLSCertsFromFiles(certFile, keyFile)
+		}
+	}
+
+	// Fallback to default paths
+	return loadMTLSCertsFromFiles(defaultCertFile, defaultKeyFile)
+}
+
+// loadMTLSCertsFromFiles loads mTLS certificates from file paths
+func loadMTLSCertsFromFiles(certFile, keyFile string) (bool, tls.Certificate) {
 	if fileExists(certFile) && fileExists(keyFile) {
 		mtlsCerts, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
