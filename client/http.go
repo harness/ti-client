@@ -342,6 +342,12 @@ func (c *HTTPClient) Healthz(ctx context.Context) error {
 	return nil
 }
 
+// DownloadAgent downloads the agent file from remote storage.
+func (c *HTTPClient) DownloadAgent(ctx context.Context, path string) (io.ReadCloser, error) {
+	resp, err := c.open(ctx, path, "GET", nil)
+	return resp.Body, err
+}
+
 func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, out interface{}, isOpen, retryOnServerErrors bool, b backoff.BackOff) (*http.Response, error) {
 	for {
 		var res *http.Response
