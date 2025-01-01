@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/harness/ti-client/types"
 )
@@ -51,4 +52,6 @@ type Client interface {
 
 	// WriteSavings writes time savings for a step/feature to TI server
 	WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64, savingsRequest types.SavingsRequest) error
+
+	DownloadAgent(ctx context.Context, path string) (io.ReadCloser, error)
 }
