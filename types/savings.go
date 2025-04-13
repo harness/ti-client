@@ -4,6 +4,7 @@ import (
 	"github.com/harness/ti-client/types/cache/buildcache"
 	"github.com/harness/ti-client/types/cache/dlc"
 	"github.com/harness/ti-client/types/cache/gradle"
+	"github.com/harness/ti-client/types/cache/maven"
 )
 
 type IntelligenceExecutionState string
@@ -23,8 +24,9 @@ const (
 )
 
 type SavingsRequest struct {
-	GradleMetrics gradle.Metrics `json:"gradle_metrics"`
-	DlcMetrics    dlc.Metrics    `json:"dlc_metrics"`
+	GradleMetrics gradle.Metrics     `json:"gradle_metrics"`
+	MavenMetrics  maven.MavenMetrics `json:"maven_metrics"`
+	DlcMetrics    dlc.Metrics        `json:"dlc_metrics"`
 }
 
 type SavingsOverview struct {
