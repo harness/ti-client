@@ -32,6 +32,9 @@ const (
 	// test which was modified).
 	SelectUpdatedTest = "updated_test"
 
+	// SelectPreviousFailure represents a selection corresponding to a test that failed in the previous build.
+	SelectPreviousFailure = "previous_failure"
+
 	// SelectFlakyTest represents a selection of a test because it's flaky.
 	SelectFlakyTest = "flaky_test"
 
@@ -194,13 +197,14 @@ type RunnableTest struct {
 }
 
 type SelectTestsResp struct {
-	TotalTests    int            `json:"total_tests"`
-	SelectedTests int            `json:"selected_tests"`
-	NewTests      int            `json:"new_tests"`
-	UpdatedTests  int            `json:"updated_tests"`
-	SrcCodeTests  int            `json:"src_code_tests"`
-	SelectAll     bool           `json:"select_all"` // We might choose to run all the tests
-	Tests         []RunnableTest `json:"tests"`
+	TotalTests       int            `json:"total_tests"`
+	SelectedTests    int            `json:"selected_tests"`
+	NewTests         int            `json:"new_tests"`
+	UpdatedTests     int            `json:"updated_tests"`
+	SrcCodeTests     int            `json:"src_code_tests"`
+	PreviousFailures int            `json:"previous_failures"`
+	SelectAll        bool           `json:"select_all"` // We might choose to run all the tests
+	Tests            []RunnableTest `json:"tests"`
 }
 
 type SelectTestsReq struct {
