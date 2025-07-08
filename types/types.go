@@ -375,10 +375,13 @@ type (
 	}
 
 	BuildIntelligenceMetaData struct {
-		BuildTasks    int      `json:"build_tasks,omitempty"`
-		TasksRestored int      `json:"tasks_restored,omitempty"`
-		StepType      string   `json:"step_type,omitempty"`
-		Errors        []string `json:"errors,omitempty"`
+		BuildTasks     int      `json:"build_tasks,omitempty"`
+		TasksRestored  int      `json:"tasks_restored,omitempty"`
+		StepType       string   `json:"step_type,omitempty"`
+		IsMavenBIUsed  bool     `json:"is_maven_bi_used,omitempty"`
+		IsGradleBIUsed bool     `json:"is_gradle_bi_used,omitempty"`
+		IsBazelBIUsed  bool     `json:"is_bazel_bi_used,omitempty"`
+		Errors         []string `json:"errors,omitempty"`
 	}
 
 	TestIntelligenceMetaData struct {
