@@ -42,6 +42,9 @@ const (
 	healthzEndpoint       = "/healthz"
 	// savings
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
+
+	// chrysalis (v2)
+	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -337,6 +340,20 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", savingsRequest, nil) //nolint:bodyclose
 	return err
+}
+
+// SubmitChecksums submits file checksums to the server
+func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]string) (types.SubmitChecksumsResp, error) {
+	var resp types.SubmitChecksumsResp
+	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
+		return resp, err
+	}
+	req := types.SubmitChecksumsReq{
+		Checksums: checksums,
+	}
+	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
+	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
+	return resp, err
 }
 
 // Healthz pings the healthz endpoint
@@ -660,10 +677,28 @@ func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
 }
 
 func (c *HTTPClient) validateMLSelectTestArgs() error {
-	if err := c.validateTiArgs(); err != nil {
+	if err := c.validateBasicArgs(); err != nil {
 		return err
 	}
-	return c.validateBasicArgs()
+	return nil
+}
+
+func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]string) error {
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if len(checksums) == 0 {
+		return &Error{Code: 400, Message: "checksums map cannot be empty"}
+	}
+	for filepath, checksum := range checksums {
+		if filepath == "" {
+			return &Error{Code: 400, Message: "filepath cannot be empty"}
+		}
+		if checksum == "" {
+			return &Error{Code: 400, Message: "checksum cannot be empty for file: " + filepath}
+		}
+	}
+	return nil
 }
 
 func (c *HTTPClient) SetBasicArguments(summaryRequest *types.SummaryRequest) {
