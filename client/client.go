@@ -53,6 +53,9 @@ type Client interface {
 	// GetTestCases returns the testcases executed in a build
 	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
 
+	// GetSkipTests returns the tests which should be skipped
+	GetSkipTests(ctx context.Context, checksums map[string]string) (types.SubmitChecksumsResp, error)
+
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
 
