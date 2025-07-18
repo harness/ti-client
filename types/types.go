@@ -343,13 +343,18 @@ type CommitInfoResp struct {
 	LastSuccessfulCommitId string `json:"commit_id"`
 }
 
-// File Checksum Request and Response
-type SubmitChecksumsReq struct {
-	Files map[string]uint64 `json:"files"` // filepath -> checksum mapping
+type SkipTestResponse struct {
+	SkipTests []string `json:"skipTests"`
 }
 
-type SubmitChecksumsResp struct {
-	Skip []string `json:"skipTests"`
+type FilehashPair struct {
+	Path     string
+	Checksum uint64
+}
+
+// Parse request body with optimized format {files: {path: checksum}}
+type ChecksumRequest struct {
+	Files map[string]uint64 `json:"files"`
 }
 
 // ML Based Test Selection Request and Response
