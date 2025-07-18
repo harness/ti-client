@@ -363,14 +363,14 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 	return err
 }
 
-// SubmitChecksums submits file checksums to the server
-func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]string) (types.SubmitChecksumsResp, error) {
+// GetSkipTests submits file checksums to the server and returns files to skip
+func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SubmitChecksumsResp, error) {
 	var resp types.SubmitChecksumsResp
 	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
 		return resp, err
 	}
 	req := types.SubmitChecksumsReq{
-		Checksums: checksums,
+		Files: checksums,
 	}
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
@@ -704,7 +704,7 @@ func (c *HTTPClient) validateMLSelectTestArgs() error {
 	return nil
 }
 
-func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]string) error {
+func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]uint64) error {
 	if err := c.validateBasicArgs(); err != nil {
 		return err
 	}
@@ -715,8 +715,8 @@ func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]string) er
 		if filepath == "" {
 			return &Error{Code: 400, Message: "filepath cannot be empty"}
 		}
-		if checksum == "" {
-			return &Error{Code: 400, Message: "checksum cannot be empty for file: " + filepath}
+		if checksum == 0 {
+			return &Error{Code: 400, Message: "checksum cannot be zero for file: " + filepath}
 		}
 	}
 	return nil

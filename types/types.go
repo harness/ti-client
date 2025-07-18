@@ -345,11 +345,11 @@ type CommitInfoResp struct {
 
 // File Checksum Request and Response
 type SubmitChecksumsReq struct {
-	Checksums map[string]string `json:"checksums"` // filepath -> checksum mapping
+	Files map[string]uint64 `json:"files"` // filepath -> checksum mapping
 }
 
 type SubmitChecksumsResp struct {
-	Skip []string `json:"skip"`
+	Skip []string `json:"skipTests"`
 }
 
 // ML Based Test Selection Request and Response
