@@ -2,5 +2,5 @@ package types
 
 type FilehashPair struct {
 	Path     string
-	Checksum int64
+	Checksum uint64
 }
