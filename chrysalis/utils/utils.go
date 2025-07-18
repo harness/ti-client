@@ -7,12 +7,12 @@ import (
 	"github.com/harness/ti-client/chrysalis/types"
 )
 
-func ChainChecksum(chain []types.FilehashPair) int64 {
+func ChainChecksum(chain []types.FilehashPair) uint64 {
 	var checksum uint64 = 0
 	for _, pair := range chain {
-		candidate := []byte(pair.Path + ":" + strconv.FormatInt(pair.Checksum, 10))
+		candidate := []byte(pair.Path + ":" + strconv.FormatUint(pair.Checksum, 10))
 		hash := xxhash.Sum64(candidate)
 		checksum ^= hash
 	}
-	return int64(checksum)
+	return checksum
 }
