@@ -371,12 +371,12 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 }
 
 // GetSkipTests submits file checksums to the server and returns files to skip
-func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SubmitChecksumsResp, error) {
-	var resp types.SubmitChecksumsResp
+func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error) {
+	var resp types.SkipTestResponse
 	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
 		return resp, err
 	}
-	req := types.SubmitChecksumsReq{
+	req := types.ChecksumRequest{
 		Files: checksums,
 	}
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)

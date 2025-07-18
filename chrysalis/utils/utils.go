@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/harness/ti-client/chrysalis/types"
+	"github.com/harness/ti-client/types"
 )
 
 func ChainChecksum(chain []types.FilehashPair) uint64 {
