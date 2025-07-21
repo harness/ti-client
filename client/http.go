@@ -33,6 +33,7 @@ const (
 	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s"
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&schemaVersion=1.1"
 	cgEndpointFailedTest  = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&hasFailedTests=true"
+	uploadcgEndpoint      = "/v2/uploadcg"
 	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
@@ -261,6 +262,16 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 	}
 
 	return c.uploadCGInternal(ctx, stepID, source, target, timeMs, cg, cgEndpointFF)
+}
+
+// UploadCgV2 uploads JSON payload to /uploadcg endpoint
+func (c *HTTPClient) UploadCgV2(ctx context.Context, jsonPayload interface{}) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	backoff := createBackoff(45 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", jsonPayload, nil, false, true, backoff) //nolint:bodyclose
+	return err
 }
 
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
