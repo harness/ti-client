@@ -29,6 +29,9 @@ type Client interface {
 	// UploadCg uploads avro encoded callgraph to ti server
 	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte, failedTestRerunEnabled bool) error
 
+	// UploadCgV2 uploads JSON payload to /uploadcg endpoint
+	UploadCgV2(ctx context.Context, jsonPayload interface{}) error
+
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
 	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
