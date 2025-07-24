@@ -270,8 +270,17 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, jsonPayload interface{}) er
 		return err
 	}
 	backoff := createBackoff(45 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", jsonPayload, nil, false, true, backoff) //nolint:bodyclose
-	return err
+
+	if payloadStr, ok := jsonPayload.(string); ok {
+		// If the payload is a string, treat it as raw JSON and pass it as an io.Reader.
+		reader := strings.NewReader(payloadStr)
+		_, err := c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+		return err
+	}
+
+	// For other types, use the existing behavior to JSON-encode the payload.
+
+	return errors.New("payload type not supported")
 }
 
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
