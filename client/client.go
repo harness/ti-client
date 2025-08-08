@@ -27,10 +27,10 @@ type Client interface {
 	SelectTests(ctx context.Context, step, source, target string, in *types.SelectTestsReq, failedTestRerunEnabled bool) (types.SelectTestsResp, error)
 
 	// UploadCg uploads avro encoded callgraph to ti server
-	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
+	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte, failedTestRerunEnabled bool) error
 
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
-	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte, failedTestRerunEnabled bool) error
+	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
 	// DownloadLink returns a list of links where the relevant agent artifacts can be downloaded
 	DownloadLink(ctx context.Context, language, os, arch, framework, version, env string) ([]types.DownloadLink, error)
