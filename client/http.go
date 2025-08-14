@@ -235,12 +235,15 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 }
 
 // SelectTests returns a list of tests which should be run intelligently
-func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target string, in *types.SelectTestsReq) (types.SelectTestsResp, error) {
+func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target string, in *types.SelectTestsReq, failedTestRerunEnabled bool) (types.SelectTestsResp, error) {
 	var resp types.SelectTestsResp
 	if err := c.validateSelectTestsArgs(stepID, source, target); err != nil {
 		return resp, err
 	}
 	path := fmt.Sprintf(testEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target)
+	if failedTestRerunEnabled {
+		path += "&failedTestRerunEnabled=true"
+	}
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp, false, false, backoff) //nolint:bodyclose
 	return resp, err
@@ -251,8 +254,13 @@ func (c *HTTPClient) UploadCgFailedTest(ctx context.Context, stepID, source, tar
 }
 
 // UploadCg uploads avro encoded callgraph to server
-func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte) error {
-	return c.uploadCGInternal(ctx, stepID, source, target, timeMs, cg, cgEndpoint)
+func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, failedTestRerunEnabled bool) error {
+	cgEndpointFF := cgEndpoint
+	if failedTestRerunEnabled {
+		cgEndpointFF = cgEndpoint + "&failedTestRerunEnabled=true"
+	}
+
+	return c.uploadCGInternal(ctx, stepID, source, target, timeMs, cg, cgEndpointFF)
 }
 
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
