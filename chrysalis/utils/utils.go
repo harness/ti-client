@@ -2,17 +2,23 @@ package utils
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/harness/ti-client/types"
 )
 
-func ChainChecksum(chain []types.FilehashPair) uint64 {
-	var checksum uint64 = 0
-	for _, pair := range chain {
-		candidate := []byte(pair.Path + ":" + strconv.FormatUint(pair.Checksum, 10))
-		hash := xxhash.Sum64(candidate)
-		checksum ^= hash
+func ChainChecksum(sourcePaths []string, fileChecksums map[string]uint64) uint64 {
+	var candidates []string
+	for _, path := range sourcePaths {
+		if pathChecksum, exists := fileChecksums[path]; exists {
+			candidates = append(candidates, path+":"+strconv.FormatUint(pathChecksum, 10))
+		}
 	}
-	return checksum
+	
+	if len(candidates) == 0 {
+		return 0
+	}
+	
+	combined := strings.Join(candidates, "|")
+	return xxhash.Sum64([]byte(combined))
 }
