@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	v2types "github.com/harness/ti-client/chrysalis/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -30,7 +31,7 @@ type Client interface {
 	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
 	// UploadCgV2 uploads JSON payload to /uploadcg endpoint
-	UploadCgV2(ctx context.Context, jsonPayload interface{}) error
+	UploadCgV2(ctx context.Context, jsonPayload v2types.UploadCgRequest) error
 
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
 	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
