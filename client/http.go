@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
+	v2types "github.com/harness/ti-client/chrysalis/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -268,22 +269,19 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 }
 
 // UploadCgV2 uploads JSON payload to /uploadcg endpoint
-func (c *HTTPClient) UploadCgV2(ctx context.Context, jsonPayload interface{}) error {
+func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
 	backoff := createBackoff(45 * 60 * time.Second)
 
-	if payloadStr, ok := jsonPayload.(string); ok {
-		// If the payload is a string, treat it as raw JSON and pass it as an io.Reader.
-		reader := strings.NewReader(payloadStr)
-		_, err := c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	jsonPayload, err := json.Marshal(uploadCgRequest)
+	if err != nil {
 		return err
 	}
-
-	// For other types, use the existing behavior to JSON-encode the payload.
-
-	return errors.New("payload type not supported")
+	reader := strings.NewReader(string(jsonPayload))
+	_, err = c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	return err
 }
 
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
