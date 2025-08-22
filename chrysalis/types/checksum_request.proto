@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package chrysalis.types;
+
+option go_package = "github.com/harness/ti-client/chrysalis/types";
+
+// Parse request body with optimized format {files: {path: checksum}}
+message ChecksumRequest {
+  // Map of file paths to their checksums
+  map<string, uint64> files = 1;
+}

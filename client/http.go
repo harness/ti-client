@@ -367,7 +367,7 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint
 	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
 		return resp, err
 	}
-	req := types.ChecksumRequest{
+	req := &v2types.ChecksumRequest{
 		Files: checksums,
 	}
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
