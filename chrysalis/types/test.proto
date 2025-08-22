@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package chrysalis.types;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/harness/ti-client/chrysalis/types";
+
+// IndicativeChain represents a document in the IndicativeChains collection
+message IndicativeChain {
+  repeated string source_paths = 1;
+}
+
+// Test represents a document in the Tests collection
+message Test {
+  string id = 1;                               // MongoDB ObjectID as hex string
+  string key = 2;                              // MongoDB ObjectID as hex string
+  string path = 3;
+  map<string, string> extra_info = 4;
+  repeated IndicativeChain indicative_chains = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp expire_at = 7;
+}

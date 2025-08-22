@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package chrysalis.types;
+
+import "identifier.proto";
+import "test.proto";
+import "chain.proto";
+
+option go_package = "github.com/harness/ti-client/chrysalis/types";
+
+// UploadCgRequest represents a request to upload code graph data including tests and chains
+message UploadCgRequest {
+  Identifier identifier = 1;
+  repeated Test tests = 2;
+  repeated Chain chains = 3;
+}

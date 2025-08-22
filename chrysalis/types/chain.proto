@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package chrysalis.types;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/harness/ti-client/chrysalis/types";
+
+// TestState represents different test execution outcomes
+enum TestState {
+  TEST_STATE_UNSPECIFIED = 0;
+  SUCCESS = 1;
+  FAILURE = 2;
+  FLAKY = 3;
+  UNKNOWN = 4;
+}
+
+// Chain represents a document in the Chains collection with state field
+message Chain {
+  string id = 1;        // MongoDB ObjectID as hex string
+  string key = 2;       // MongoDB ObjectID as hex string
+  string path = 3;
+  string checksum = 4;
+  TestState state = 5;
+  map<string, string> extra_info = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp expire_at = 8;
+}

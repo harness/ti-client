@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package chrysalis.types;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/harness/ti-client/chrysalis/types";
+
+// Identifier represents a document in the Identifiers collection
+message Identifier {
+  string id = 1;         // MongoDB ObjectID as hex string
+  string account_id = 2;
+  string org_id = 3;
+  string project_id = 4;
+  string repo = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp expires_at = 7;
+}
