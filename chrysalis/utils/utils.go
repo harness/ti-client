@@ -14,11 +14,11 @@ func ChainChecksum(sourcePaths []string, fileChecksums map[string]uint64) uint64
 			candidates = append(candidates, path+":"+strconv.FormatUint(pathChecksum, 10))
 		}
 	}
-	
+
 	if len(candidates) == 0 {
 		return 0
 	}
-	
+
 	combined := strings.Join(candidates, "|")
 	return xxhash.Sum64([]byte(combined))
 }

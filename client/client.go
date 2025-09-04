@@ -31,7 +31,7 @@ type Client interface {
 	UploadCg(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
 	// UploadCgV2 uploads JSON payload to /uploadcg endpoint
-	UploadCgV2(ctx context.Context, jsonPayload v2types.UploadCgRequest) error
+	UploadCgV2(ctx context.Context, jsonPayload v2types.UploadCgRequest, stepID string) error
 
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
 	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
@@ -55,7 +55,7 @@ type Client interface {
 	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
 
 	// GetSkipTests returns the tests which should be skipped
-	GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error)
+	GetSkipTests(ctx context.Context, checksums map[string]uint64, stepID string) (types.SkipTestResponse, error)
 
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error

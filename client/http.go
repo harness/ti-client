@@ -45,8 +45,8 @@ const (
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
 
 	// chrysalis (v2)
-	uploadcgEndpoint  = "/v2/uploadcg"
-	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s"
+	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
+	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -262,7 +262,7 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 }
 
 // UploadCgV2 uploads JSON payload to /uploadcg endpoint
-func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest) error {
+func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest, stepID string) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
@@ -273,7 +273,8 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.Upl
 		return err
 	}
 	reader := strings.NewReader(string(jsonPayload))
-	_, err = c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID)
+	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
 	return err
 }
 
@@ -362,7 +363,7 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 }
 
 // GetSkipTests submits file checksums to the server and returns files to skip
-func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error) {
+func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64, stepId string) (types.SkipTestResponse, error) {
 	var resp types.SkipTestResponse
 	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
 		return resp, err
@@ -370,7 +371,7 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint
 	req := types.ChecksumRequest{
 		Files: checksums,
 	}
-	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
+	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepId)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
 	return resp, err
 }
