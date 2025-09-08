@@ -48,7 +48,7 @@ type Client interface {
 	Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error)
 
 	// GetTestCases returns the testcases executed in a build
-	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
+	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest, multisearch bool) (types.TestCases, error)
 
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
