@@ -322,7 +322,7 @@ func (c *HTTPClient) Summary(ctx context.Context, summaryRequest types.SummaryRe
 	return resp, err
 }
 
-func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error) {
+func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest, multisearch bool) (types.TestCases, error) {
 	var resp types.TestCases
 	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
