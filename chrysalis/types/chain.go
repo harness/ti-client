@@ -22,7 +22,6 @@ type Chain struct {
 	TestChecksum string             `bson:"testChecksum" json:"testChecksum"`
 	Checksum     string             `bson:"checksum" json:"checksum"`
 	State        TestState          `bson:"state" json:"state"`
-	ExtraInfo    map[string]string  `bson:"extraInfo" json:"extraInfo"`
 	UpdatedAt    time.Time          `bson:"updatedAt" json:"updatedAt"`
 	ExpireAt     time.Time          `bson:"expireAt" json:"expireAt"`
 }
