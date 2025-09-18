@@ -45,7 +45,7 @@ const (
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
 
 	// chrysalis (v2)
-	uploadcgEndpoint  = "/v2/uploadcg"
+	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s"
 	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
@@ -269,7 +269,7 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 }
 
 // UploadCgV2 uploads JSON payload to /uploadcg endpoint
-func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest) error {
+func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest, stepID string, timeMs int64, sourceBranch string, targetBranch string) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
@@ -280,7 +280,8 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.Upl
 		return err
 	}
 	reader := strings.NewReader(string(jsonPayload))
-	_, err = c.retry(ctx, c.Endpoint+uploadcgEndpoint, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch)
+	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
 	return err
 }
 
