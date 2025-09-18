@@ -39,6 +39,7 @@ const (
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s"
 	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
 	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
+	testCasesEndpointV2   = "/reports/test_cases_v2?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
 	// savings
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
@@ -331,6 +332,9 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 	c.SetBasicArguments(&testCasesRequest.BasicInfo)
 
 	path := fmt.Sprintf(testCasesEndpoint, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName)
+	if multisearch {
+		path = fmt.Sprintf(testCasesEndpointV2, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName)
+	}
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
