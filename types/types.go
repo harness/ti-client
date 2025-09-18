@@ -344,7 +344,8 @@ type CommitInfoResp struct {
 }
 
 type SkipTestResponse struct {
-	SkipTests []string `json:"skipTests"`
+	SkipTests   []string `json:"skipTests"`
+	FailedTests []string `json:"failedTests"`
 }
 
 type FilehashPair struct {

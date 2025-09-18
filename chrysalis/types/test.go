@@ -16,7 +16,6 @@ type Test struct {
 	ID               primitive.ObjectID `bson:"_id" json:"_id"`
 	Key              primitive.ObjectID `bson:"key" json:"key"`
 	Path             string             `bson:"path" json:"path"`
-	ExtraInfo        map[string]string  `bson:"extraInfo" json:"extraInfo"`
 	IndicativeChains []IndicativeChain  `bson:"indicativeChains" json:"indicativeChains"`
 	UpdatedAt        time.Time          `bson:"updatedAt" json:"updatedAt"`
 	ExpireAt         time.Time          `bson:"expireAt" json:"expireAt"`
