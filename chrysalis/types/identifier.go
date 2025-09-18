@@ -15,4 +15,5 @@ type Identifier struct {
 	Repo      string             `bson:"repo" json:"repo"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
 	ExpiresAt time.Time          `bson:"expiresAt" json:"expiresAt"`
+	ExtraInfo map[string]string  `bson:"extraInfo" json:"extraInfo"`
 }

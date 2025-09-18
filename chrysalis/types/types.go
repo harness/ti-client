@@ -7,4 +7,5 @@ type UploadCgRequest struct {
 	Chains           []Chain        `json:"chains"`
 	PathToTestNumMap map[string]int `json:"pathToTestNumMap"`
 	TotalTests       int            `json:"totalTests"`
+	PreviousFailures []string       `json:"previousFailures"`
 }
