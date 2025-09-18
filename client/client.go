@@ -52,7 +52,7 @@ type Client interface {
 	Summary(ctx context.Context, summaryRequest types.SummaryRequest) (types.SummaryResponse, error)
 
 	// GetTestCases returns the testcases executed in a build
-	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest) (types.TestCases, error)
+	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest, multisearch bool) (types.TestCases, error)
 
 	// GetSkipTests returns the tests which should be skipped
 	GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error)
