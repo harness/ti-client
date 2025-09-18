@@ -3,7 +3,7 @@ module github.com/harness/ti-client
 go 1.20
 
 require (
-	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/cespare/xxhash/v2 v2.3.0
+	go.mongodb.org/mongo-driver v1.17.4
 )

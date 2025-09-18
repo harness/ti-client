@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
+	v2types "github.com/harness/ti-client/chrysalis/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -42,6 +43,10 @@ const (
 	healthzEndpoint       = "/healthz"
 	// savings
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
+
+	// chrysalis (v2)
+	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s"
+	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -263,6 +268,23 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 	return c.uploadCGInternal(ctx, stepID, source, target, timeMs, cg, cgEndpointFF)
 }
 
+// UploadCgV2 uploads JSON payload to /uploadcg endpoint
+func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest, stepID string, timeMs int64, sourceBranch string, targetBranch string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	backoff := createBackoff(45 * 60 * time.Second)
+
+	jsonPayload, err := json.Marshal(uploadCgRequest)
+	if err != nil {
+		return err
+	}
+	reader := strings.NewReader(string(jsonPayload))
+	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch)
+	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	return err
+}
+
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
 	if err := c.validateUploadCgArgs(stepID, source, target); err != nil {
 		return err
@@ -345,6 +367,20 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", savingsRequest, nil) //nolint:bodyclose
 	return err
+}
+
+// GetSkipTests submits file checksums to the server and returns files to skip
+func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error) {
+	var resp types.SkipTestResponse
+	if err := c.validateSubmitChecksumsArgs(checksums); err != nil {
+		return resp, err
+	}
+	req := types.ChecksumRequest{
+		Files: checksums,
+	}
+	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
+	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
+	return resp, err
 }
 
 // Healthz pings the healthz endpoint
@@ -672,6 +708,24 @@ func (c *HTTPClient) validateMLSelectTestArgs() error {
 		return err
 	}
 	return c.validateBasicArgs()
+}
+
+func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]uint64) error {
+	if err := c.validateBasicArgs(); err != nil {
+		return err
+	}
+	if len(checksums) == 0 {
+		return &Error{Code: 400, Message: "checksums map cannot be empty"}
+	}
+	for filepath, checksum := range checksums {
+		if filepath == "" {
+			return &Error{Code: 400, Message: "filepath cannot be empty"}
+		}
+		if checksum == 0 {
+			return &Error{Code: 400, Message: "checksum cannot be zero for file: " + filepath}
+		}
+	}
+	return nil
 }
 
 func (c *HTTPClient) SetBasicArguments(summaryRequest *types.SummaryRequest) {
