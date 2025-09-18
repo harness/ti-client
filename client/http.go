@@ -697,10 +697,10 @@ func (c *HTTPClient) validateCommitInfoArgs(stepID, branch string) error {
 }
 
 func (c *HTTPClient) validateMLSelectTestArgs() error {
-	if err := c.validateBasicArgs(); err != nil {
+	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
-	return nil
+	return c.validateBasicArgs()
 }
 
 func (c *HTTPClient) validateSubmitChecksumsArgs(checksums map[string]uint64) error {
