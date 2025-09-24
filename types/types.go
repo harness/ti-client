@@ -410,6 +410,7 @@ type (
 		TotalSelectedTestClass int      `json:"total_selected_test_classes,omitempty"`
 		CPUTimeSaved           int64    `json:"cpu_time_saved,omitempty"`
 		IsRunTestV2            bool     `json:"is_run_test_v2,omitempty"`
+		Language               []string   `json:"language,omitempty"`
 		Errors                 []string `json:"errors,omitempty"`
 	}
 
