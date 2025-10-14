@@ -21,6 +21,9 @@ const (
 	// an uncaught exception.
 	StatusError = "error"
 
+	// StatusSkippedByTI represents a test case that was intentionally skipped by TI.
+	StatusSkippedByTI = "skipped_by_ti"
+
 	// SelectSourceCode represents a selection corresponding to source code changes.
 	SelectSourceCode = "source_code"
 
@@ -162,6 +165,7 @@ type SummaryResponse struct {
 	FailedTests     int   `json:"failed_tests"`
 	SuccessfulTests int   `json:"successful_tests"`
 	SkippedTests    int   `json:"skipped_tests"`
+	SkippedByTI     int   `json:"skipped_by_ti"`
 	TimeMs          int64 `json:"duration_ms"`
 }
 
