@@ -55,7 +55,7 @@ type Client interface {
 	GetTestCases(ctx context.Context, testCasesRequest types.TestCasesRequest, multisearch bool) (types.TestCases, error)
 
 	// GetSkipTests returns the tests which should be skipped
-	GetSkipTests(ctx context.Context, checksums map[string]uint64) (types.SkipTestResponse, error)
+	GetSkipTests(ctx context.Context, req v2types.SkipTestsRequest) (types.SkipTestResponse, error)
 
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
