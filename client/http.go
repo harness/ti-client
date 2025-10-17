@@ -30,20 +30,20 @@ import (
 var _ Client = (*HTTPClient)(nil)
 
 const (
-	dbEndpoint            = "/reports/write?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&repo=%s&sha=%s&commitLink=%s"
-	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s"
-	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&schemaVersion=1.1"
-	cgEndpointFailedTest  = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&hasFailedTests=true"
-	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
-	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
-	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
-	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s"
-	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s"
-	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
+	dbEndpoint            = "/reports/write?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&repo=%s&sha=%s&commitLink=%s&parentUniqueId=%s"
+	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&parentUniqueId=%s"
+	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&schemaVersion=1.1&parentUniqueId=%s"
+	cgEndpointFailedTest  = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&hasFailedTests=true&parentUniqueId=%s"
+	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&parentUniqueId=%s"
+	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s&parentUniqueId=%s"
+	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s&parentUniqueId=%s"
+	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s&parentUniqueId=%s"
+	summaryEndpoint       = "/reports/summary?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&parentUniqueId=%s"
+	testCasesEndpoint     = "/reports/test_cases?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s&parentUniqueId=%s"
 	testCasesEndpointV2   = "/reports/test_cases_v2?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&testCaseSearchTerm=%s&sort=%s&order=%s&pageIndex=%s&pageSize=%s&suite_name=%s"
 	healthzEndpoint       = "/healthz"
 	// savings
-	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s"
+	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s&parentUniqueId=%s"
 
 	// chrysalis (v2)
 	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s"
@@ -58,21 +58,22 @@ var defaultClient = &http.Client{
 }
 
 // NewHTTPClient returns a new HTTPClient with optional mTLS and custom root certificates.
-func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, buildID, stageID, repo, sha, commitLink string, skipverify bool, additionalCertsDir, base64MtlsClientCert, base64MtlsClientCertKey string) *HTTPClient {
+func NewHTTPClient(endpoint, token, accountID, orgID, projectID, pipelineID, buildID, stageID, repo, sha, commitLink string, skipverify bool, additionalCertsDir, base64MtlsClientCert, base64MtlsClientCertKey, parentUniqueID string) *HTTPClient {
 	endpoint = strings.TrimSuffix(endpoint, "/")
 	client := &HTTPClient{
-		Endpoint:   endpoint,
-		Token:      token,
-		AccountID:  accountID,
-		OrgID:      orgID,
-		ProjectID:  projectID,
-		PipelineID: pipelineID,
-		BuildID:    buildID,
-		StageID:    stageID,
-		Repo:       repo,
-		Sha:        sha,
-		CommitLink: commitLink,
-		SkipVerify: skipverify,
+		Endpoint:       endpoint,
+		Token:          token,
+		AccountID:      accountID,
+		OrgID:          orgID,
+		ProjectID:      projectID,
+		PipelineID:     pipelineID,
+		BuildID:        buildID,
+		StageID:        stageID,
+		Repo:           repo,
+		Sha:            sha,
+		CommitLink:     commitLink,
+		SkipVerify:     skipverify,
+		ParentUniqueID: parentUniqueID,
 	}
 
 	// Load mTLS certificates if available
@@ -202,19 +203,20 @@ func fileExists(filename string) bool {
 
 // HTTPClient provides an http service client.
 type HTTPClient struct {
-	Client     *http.Client
-	Endpoint   string // Example: http://localhost:port
-	Token      string
-	AccountID  string
-	OrgID      string
-	ProjectID  string
-	PipelineID string
-	BuildID    string
-	StageID    string
-	Repo       string
-	Sha        string
-	CommitLink string
-	SkipVerify bool
+	Client         *http.Client
+	Endpoint       string // Example: http://localhost:port
+	Token          string
+	AccountID      string
+	OrgID          string
+	ProjectID      string
+	PipelineID     string
+	BuildID        string
+	StageID        string
+	Repo           string
+	Sha            string
+	CommitLink     string
+	SkipVerify     bool
+	ParentUniqueID string
 }
 
 // Write writes test results to the TI server
@@ -222,7 +224,7 @@ func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*
 	if err := c.validateWriteArgs(stepID, report); err != nil {
 		return err
 	}
-	path := fmt.Sprintf(dbEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, report, c.Repo, c.Sha, c.CommitLink)
+	path := fmt.Sprintf(dbEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, report, c.Repo, c.Sha, c.CommitLink, c.ParentUniqueID)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &tests, nil, false, false, backoff) //nolint:bodyclose
 	return err
@@ -234,7 +236,7 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 	if err := c.validateDownloadLinkArgs(language); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework, version, env)
+	path := fmt.Sprintf(agentEndpoint, c.AccountID, language, os, arch, framework, version, env, c.ParentUniqueID)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -246,7 +248,7 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 	if err := c.validateSelectTestsArgs(stepID, source, target); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(testEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target)
+	path := fmt.Sprintf(testEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, c.ParentUniqueID)
 	if failedTestRerunEnabled {
 		path += "&failedTestRerunEnabled=true"
 	}
@@ -290,7 +292,7 @@ func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, targe
 	if err := c.validateUploadCgArgs(stepID, source, target); err != nil {
 		return err
 	}
-	path := fmt.Sprintf(endpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs)
+	path := fmt.Sprintf(endpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs, c.ParentUniqueID)
 	backoff := createBackoff(45 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, true, backoff) //nolint:bodyclose
 	return err
@@ -302,7 +304,7 @@ func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.
 	if err := c.validateGetTestTimesArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID)
+	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.ParentUniqueID)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -314,7 +316,7 @@ func (c *HTTPClient) CommitInfo(ctx context.Context, stepID, branch string) (typ
 	if err := c.validateCommitInfoArgs(stepID, branch); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(commitInfoEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, branch)
+	path := fmt.Sprintf(commitInfoEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, branch, c.ParentUniqueID)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -326,7 +328,7 @@ func (c *HTTPClient) MLSelectTests(ctx context.Context, stepID, mlKey, source, t
 	if err := c.validateMLSelectTestArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, mlKey, c.CommitLink)
+	path := fmt.Sprintf(mlSelectTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, mlKey, c.CommitLink, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", in, &resp) //nolint:bodyclose
 	return resp, err
 }
@@ -339,7 +341,7 @@ func (c *HTTPClient) Summary(ctx context.Context, summaryRequest types.SummaryRe
 
 	c.SetBasicArguments(&summaryRequest)
 
-	path := fmt.Sprintf(summaryEndpoint, c.AccountID, summaryRequest.OrgID, summaryRequest.ProjectID, summaryRequest.PipelineID, summaryRequest.BuildID, summaryRequest.StageID, summaryRequest.StepID, summaryRequest.ReportType)
+	path := fmt.Sprintf(summaryEndpoint, c.AccountID, summaryRequest.OrgID, summaryRequest.ProjectID, summaryRequest.PipelineID, summaryRequest.BuildID, summaryRequest.StageID, summaryRequest.StepID, summaryRequest.ReportType, c.ParentUniqueID)
 	backoff := createBackoff(5 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -353,7 +355,7 @@ func (c *HTTPClient) GetTestCases(ctx context.Context, testCasesRequest types.Te
 
 	c.SetBasicArguments(&testCasesRequest.BasicInfo)
 
-	path := fmt.Sprintf(testCasesEndpoint, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName)
+	path := fmt.Sprintf(testCasesEndpoint, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName, c.ParentUniqueID)
 	if multisearch {
 		path = fmt.Sprintf(testCasesEndpointV2, c.AccountID, testCasesRequest.BasicInfo.OrgID, testCasesRequest.BasicInfo.ProjectID, testCasesRequest.BasicInfo.PipelineID, testCasesRequest.BasicInfo.BuildID, testCasesRequest.BasicInfo.StageID, testCasesRequest.BasicInfo.StepID, testCasesRequest.BasicInfo.ReportType, testCasesRequest.TestCaseSearchTerm, testCasesRequest.Sort, testCasesRequest.Order, testCasesRequest.PageIndex, testCasesRequest.PageSize, testCasesRequest.SuiteName)
 	}
@@ -368,7 +370,7 @@ func (c *HTTPClient) WriteSavings(ctx context.Context, stepID string, featureNam
 		return err
 	}
 	timeTakenMsStr := strconv.Itoa(int(timeTakenMs))
-	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr)
+	path := fmt.Sprintf(savingsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, string(featureName), string(featureState), timeTakenMsStr, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", "", savingsRequest, nil) //nolint:bodyclose
 	return err
 }
