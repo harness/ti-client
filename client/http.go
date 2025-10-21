@@ -46,8 +46,8 @@ const (
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s&parentUniqueId=%s"
 
 	// chrysalis (v2)
-	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s"
-	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s"
+	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
+	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -283,7 +283,7 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.Upl
 		return err
 	}
 	reader := strings.NewReader(string(jsonPayload))
-	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch)
+	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch, c.ParentUniqueID)
 	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
 	return err
 }
@@ -384,7 +384,7 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, checksums map[string]uint
 	req := types.ChecksumRequest{
 		Files: checksums,
 	}
-	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
+	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
 	return resp, err
 }
