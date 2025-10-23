@@ -12,6 +12,6 @@ type UploadCgRequest struct {
 }
 
 type SkipTestsRequest struct {
-	Files            map[string]uint64   `json:"files"`
-	ExecutionContext []map[string]string `json:"executionContext"`
+	Files            map[string]uint64 `json:"files"`
+	ExecutionContext map[string]string `json:"executionContext"`
 }
