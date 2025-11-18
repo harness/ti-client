@@ -411,8 +411,32 @@ type (
 	}
 
 	BuildInfo struct {
-		HarnessLang      string `json:"harness_lang,omitempty"`
-		HarnessBuildTool string `json:"harness_build_tool,omitempty"`
+		HarnessLang      string      `json:"harness_lang,omitempty"`
+		HarnessBuildTool string      `json:"harness_build_tool,omitempty"`
+		Repository       string      `json:"repository,omitempty"`
+		BuildEvent       string      `json:"build_event,omitempty"`
+		BuildEventValue  string      `json:"build_event_value,omitempty"`
+		Metrics          CodeMetrics `json:"metrics,omitempty"`
+		PluginVersion    string      `json:"plugin_version,omitempty"`
+	}
+
+	CodeMetrics struct {
+		Lines      int64                      `json:"lines,omitempty"`
+		Code       int64                      `json:"code,omitempty"`
+		Comments   int64                      `json:"comments,omitempty"`
+		Blanks     int64                      `json:"blanks,omitempty"`
+		Complexity int64                      `json:"complexity,omitempty"`
+		Files      int64                      `json:"files,omitempty"`
+		Languages  map[string]LanguageMetrics `json:"languages,omitempty"`
+	}
+
+	LanguageMetrics struct {
+		Lines      int64 `json:"lines,omitempty"`
+		Code       int64 `json:"code,omitempty"`
+		Comments   int64 `json:"comments,omitempty"`
+		Blanks     int64 `json:"blanks,omitempty"`
+		Complexity int64 `json:"complexity,omitempty"`
+		Files      int64 `json:"files,omitempty"`
 	}
 
 	CacheIntelligenceMetaData struct {
