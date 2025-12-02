@@ -34,7 +34,7 @@ const (
 	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&parentUniqueId=%s"
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&schemaVersion=1.1&parentUniqueId=%s"
 	cgEndpointFailedTest  = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&hasFailedTests=true&parentUniqueId=%s"
-	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&parentUniqueId=%s&buildStartTime=%s"
+	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&parentUniqueId=%s&buildStartTime=%d"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s&parentUniqueId=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s&parentUniqueId=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s&parentUniqueId=%s"
@@ -299,7 +299,7 @@ func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, targe
 }
 
 // GetTestTimes gets test timing data
-func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq, buildStartTime string) (types.GetTestTimesResp, error) {
+func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq, buildStartTime int64) (types.GetTestTimesResp, error) {
 	var resp types.GetTestTimesResp
 	if err := c.validateGetTestTimesArgs(); err != nil {
 		return resp, err
