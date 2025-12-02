@@ -34,7 +34,7 @@ const (
 	testEndpoint          = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s"
 	cgEndpoint            = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&schemaVersion=1.1"
 	cgEndpointFailedTest  = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d&hasFailedTests=true"
-	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s"
+	getTestsTimesEndpoint = "/tests/timedata?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&buildStartTime=%s"
 	agentEndpoint         = "/agents/link?accountId=%s&language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 	commitInfoEndpoint    = "/vcs/commitinfo?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&branch=%s"
 	mlSelectTestsEndpoint = "/ml/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&mlKey=%s&commitLink=%s"
@@ -297,12 +297,12 @@ func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, targe
 }
 
 // GetTestTimes gets test timing data
-func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq) (types.GetTestTimesResp, error) {
+func (c *HTTPClient) GetTestTimes(ctx context.Context, stepID string, in *types.GetTestTimesReq, buildStartTime string) (types.GetTestTimesResp, error) {
 	var resp types.GetTestTimesResp
 	if err := c.validateGetTestTimesArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID)
+	path := fmt.Sprintf(getTestsTimesEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, buildStartTime)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", in, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err

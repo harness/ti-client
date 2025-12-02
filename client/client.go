@@ -40,7 +40,7 @@ type Client interface {
 	DownloadLink(ctx context.Context, language, os, arch, framework, version, env string) ([]types.DownloadLink, error)
 
 	// GetTestTimes returns the test timing data
-	GetTestTimes(ctx context.Context, step string, in *types.GetTestTimesReq) (types.GetTestTimesResp, error)
+	GetTestTimes(ctx context.Context, step string, in *types.GetTestTimesReq, buildStartTime string) (types.GetTestTimesResp, error)
 
 	// CommitInfo returns the commit id of the last successful commit of a branch for which there is a callgraph
 	CommitInfo(ctx context.Context, stepID, branch string) (types.CommitInfoResp, error)
