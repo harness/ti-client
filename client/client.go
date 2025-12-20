@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 
 	v2types "github.com/harness/ti-client/chrysalis/types"
 	"github.com/harness/ti-client/types"
@@ -64,4 +65,8 @@ type Client interface {
 	WriteSavings(ctx context.Context, stepID string, featureName types.SavingsFeature, featureState types.IntelligenceExecutionState, timeTakenMs int64, savingsRequest types.SavingsRequest) error
 
 	DownloadAgent(ctx context.Context, path string) (io.ReadCloser, error)
+
+	// Forward makes a request to the TI service at the given path with the given method and body.
+	// The body should be a JSON string. This is a generic method for forwarding requests to the TI service.
+	Forward(ctx context.Context, method, path string, body string) (*http.Response, error)
 }
