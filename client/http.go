@@ -754,3 +754,14 @@ func (c *HTTPClient) SetBasicArguments(summaryRequest *types.SummaryRequest) {
 		summaryRequest.StepID = ""
 	}
 }
+
+func (c *HTTPClient) Forward(ctx context.Context, method, path string, body string) (*http.Response, error) {
+	url := c.Endpoint + path
+
+	var reqBody io.Reader
+	if body != "" {
+		reqBody = strings.NewReader(body)
+	}
+
+	return c.open(ctx, url, method, reqBody)
+}
