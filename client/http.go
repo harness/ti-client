@@ -46,8 +46,9 @@ const (
 	savingsEndpoint = "/savings?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&featureName=%s&featureState=%s&timeMs=%s&parentUniqueId=%s"
 
 	// chrysalis (v2)
-	uploadcgEndpoint  = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
-	skipTestsEndpoint = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
+	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
+	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
+	quarantinedTestsEndpoint = "/test-management/quarantined?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -384,6 +385,19 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, req v2types.SkipTestsRequ
 
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
+	return resp, err
+}
+
+// GetQuarantinedTests returns a list of quarantined tests for the account and repo
+func (c *HTTPClient) GetQuarantinedTests(ctx context.Context) (types.MarkedTestsResponse, error) {
+	var resp types.MarkedTestsResponse
+	if err := c.validateBasicArgs(); err != nil {
+		return resp, err
+	}
+
+	path := fmt.Sprintf(quarantinedTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo)
+	backoff := createBackoff(5 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "GET", "", nil, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
 }
 

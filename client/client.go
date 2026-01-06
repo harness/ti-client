@@ -58,6 +58,9 @@ type Client interface {
 	// GetSkipTests returns the tests which should be skipped
 	GetSkipTests(ctx context.Context, req v2types.SkipTestsRequest) (types.SkipTestResponse, error)
 
+	// GetQuarantinedTests returns a list of quarantined tests for a given account and repo
+	GetQuarantinedTests(ctx context.Context) (types.MarkedTestsResponse, error)
+
 	//Healthz pings the healthz endpoint
 	Healthz(ctx context.Context) error
 
