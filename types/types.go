@@ -354,6 +354,36 @@ type SkipTestResponse struct {
 	FailedTests []string `json:"failedTests"`
 }
 
+// MarkedTest represents a test that has been marked (flaky or quarantined)
+type MarkedTest struct {
+	TestID    string `json:"test_id"`
+	TestName  string `json:"test_name"`
+	ClassName string `json:"class_name"`
+	SuiteName string `json:"suite_name,omitempty"`
+}
+
+// MarkedTestsResponse contains the list of marked tests (flaky or quarantined)
+type MarkedTestsResponse struct {
+	Tests []MarkedTest `json:"tests"`
+}
+
+// TestMarking represents a test with all its marking information
+type TestMarking struct {
+	TestID           string  `json:"test_id"`
+	TestName         string  `json:"test_name"`
+	ClassName        string  `json:"class_name"`
+	SuiteName        string  `json:"suite_name,omitempty"`
+	FlakyStatus      *bool   `json:"flaky_status"`      // nil=unmarked, true=flaky, false=not flaky
+	QuarantineStatus *bool   `json:"quarantine_status"` // nil=unmarked, true=quarantined, false=not quarantined
+	FlakyReason      *string `json:"flaky_reason,omitempty"`
+	QuarantineReason *string `json:"quarantine_reason,omitempty"`
+}
+
+// TestMarkingsResponse contains the list of all tests with their marking information
+type TestMarkingsResponse struct {
+	Tests []TestMarking `json:"tests"`
+}
+
 // ML Based Test Selection Request and Response
 type MLSelectTestsRequest struct {
 	SelectAll           bool                `json:"select_all"`
