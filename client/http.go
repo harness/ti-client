@@ -48,8 +48,8 @@ const (
 	// chrysalis (v2)
 	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
 	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
-	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&parentUniqueId=%s"
-	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
+	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
+	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
 	quarantinedTestsEndpoint = "/test-management/quarantined?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
@@ -396,7 +396,7 @@ func (c *HTTPClient) SelectAndSplit(ctx context.Context, req v2types.SelectAndSp
 	if err := c.validateBasicArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(selectAndSplitEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.ParentUniqueID)
+	path := fmt.Sprintf(selectAndSplitEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.ParentUniqueID)
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
@@ -408,7 +408,7 @@ func (c *HTTPClient) GetStageBatch(ctx context.Context, req v2types.StageBatchRe
 	if err := c.validateBasicArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(stageBatchEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.ParentUniqueID)
+	path := fmt.Sprintf(stageBatchEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
 	return resp, err
 }
