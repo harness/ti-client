@@ -48,6 +48,8 @@ const (
 	// chrysalis (v2)
 	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
 	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
+	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&parentUniqueId=%s"
+	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
 	quarantinedTestsEndpoint = "/test-management/quarantined?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
@@ -384,6 +386,29 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, req v2types.SkipTestsRequ
 	}
 
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID)
+	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
+	return resp, err
+}
+
+// SelectAndSplit performs test selection and splits tests into balanced partitions for parallel execution
+func (c *HTTPClient) SelectAndSplit(ctx context.Context, req v2types.SelectAndSplitRequest) (v2types.SelectAndSplitResponse, error) {
+	var resp v2types.SelectAndSplitResponse
+	if err := c.validateBasicArgs(); err != nil {
+		return resp, err
+	}
+	path := fmt.Sprintf(selectAndSplitEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.ParentUniqueID)
+	backoff := createBackoff(10 * 60 * time.Second)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp, false, true, backoff) //nolint:bodyclose
+	return resp, err
+}
+
+// GetStageBatch retrieves the test partition assigned to a specific parallel stage
+func (c *HTTPClient) GetStageBatch(ctx context.Context, req v2types.StageBatchRequest) (v2types.StageBatchResponse, error) {
+	var resp v2types.StageBatchResponse
+	if err := c.validateBasicArgs(); err != nil {
+		return resp, err
+	}
+	path := fmt.Sprintf(stageBatchEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.ParentUniqueID)
 	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
 	return resp, err
 }

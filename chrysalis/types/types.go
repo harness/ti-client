@@ -14,3 +14,34 @@ type SkipTestsRequest struct {
 	Files            map[string]uint64 `json:"files"`
 	ExecutionContext map[string]string `json:"executionContext"`
 }
+
+type SelectAndSplitRequest struct {
+	Files            map[string]uint64 `json:"files"`
+	ExecutionContext map[string]string `json:"executionContext"`
+	AllTests         []string          `json:"allTests"`
+	SplitConfig      SplitConfig       `json:"splitConfig"`
+}
+
+type SplitConfig struct {
+	MaxStages   int    `json:"maxStages"`
+	TimeDataKey string `json:"timeDataKey"` // "class_name", "name", "file_name", "suite_name"
+}
+
+type SelectAndSplitResponse struct {
+	SkipTests           []string      `json:"skipTests"`
+	FailedTests         []string      `json:"failedTests"`
+	Parallelism         int           `json:"parallelism"`
+	TotalSelectedTests  int           `json:"totalSelectedTests"`
+	EstimatedDurationMs map[int]int64 `json:"estimatedDurationMs"`
+}
+
+type StageBatchRequest struct {
+	StageIndex int `json:"stageIndex"`
+}
+
+type StageBatchResponse struct {
+	TestIDs             []string `json:"testIds"`
+	StageIndex          int      `json:"stageIndex"`
+	TotalStages         int      `json:"totalStages"`
+	EstimatedDurationMs int64    `json:"estimatedDurationMs"`
+}

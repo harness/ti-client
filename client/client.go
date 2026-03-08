@@ -58,6 +58,12 @@ type Client interface {
 	// GetSkipTests returns the tests which should be skipped
 	GetSkipTests(ctx context.Context, req v2types.SkipTestsRequest) (types.SkipTestResponse, error)
 
+	// SelectAndSplit performs test selection and splits tests into balanced partitions for parallel execution
+	SelectAndSplit(ctx context.Context, req v2types.SelectAndSplitRequest) (v2types.SelectAndSplitResponse, error)
+
+	// GetStageBatch retrieves the test partition assigned to a specific parallel stage
+	GetStageBatch(ctx context.Context, req v2types.StageBatchRequest) (v2types.StageBatchResponse, error)
+
 	// GetQuarantinedTests returns a list of quarantined tests for a given account and repo
 	GetQuarantinedTests(ctx context.Context) (types.MarkedTestsResponse, error)
 
