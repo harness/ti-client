@@ -23,8 +23,9 @@ type SelectAndSplitRequest struct {
 }
 
 type SplitConfig struct {
-	MaxStages   int    `json:"maxStages"`
-	TimeDataKey string `json:"timeDataKey"` // "class_name", "name", "file_name", "suite_name"
+	MaxStages        int    `json:"maxStages"`
+	TimeDataKey      string `json:"timeDataKey"`      // "class_name", "name", "file_name", "suite_name"
+	MaxTestsPerStage int    `json:"maxTestsPerStage"` // 0 = no limit; >0 caps tests per stage
 }
 
 type SelectAndSplitResponse struct {
