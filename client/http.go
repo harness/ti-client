@@ -505,9 +505,7 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 		return nil, err
 	}
 
-	// the request should include the secret shared between
-	// the agent and server for authorization.
-	req.Header.Add("X-Harness-Token", c.Token)
+	c.setAuthHeader(req)
 	// adding sha as request-id for logging context
 	if sha != "" {
 		req.Header.Add("X-Request-ID", sha)
@@ -561,6 +559,22 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 	return res, json.Unmarshal(body, out)
 }
 
+// isPAT reports whether the client token is a Personal Access Token
+// (starts with "pat." case-insensitively).
+func (c *HTTPClient) isPAT() bool {
+	return strings.HasPrefix(strings.ToLower(c.Token), "pat.")
+}
+
+// setAuthHeader sets the appropriate auth header on the request.
+// PATs use x-api-key; all other tokens use X-Harness-Token.
+func (c *HTTPClient) setAuthHeader(req *http.Request) {
+	if c.isPAT() {
+		req.Header.Set("x-api-key", c.Token)
+	} else {
+		req.Header.Add("X-Harness-Token", c.Token)
+	}
+}
+
 // client is a helper function that returns the default client
 // if a custom client is not defined.
 func (c *HTTPClient) client() *http.Client {
@@ -576,7 +590,7 @@ func (c *HTTPClient) open(ctx context.Context, path, method string, body io.Read
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("X-Harness-Token", c.Token)
+	c.setAuthHeader(req)
 	return c.client().Do(req)
 }
 
