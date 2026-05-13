@@ -519,6 +519,7 @@ func (c *HTTPClient) doWithOptions(ctx context.Context, path, method, sha string
 	}
 	if contentEncoding != "" {
 		req.Header.Set("Content-Encoding", contentEncoding)
+		req.Header.Set("Accept-Encoding", "gzip")
 	}
 	res, err := c.client().Do(req)
 	if res != nil {
@@ -541,8 +542,14 @@ func (c *HTTPClient) doWithOptions(ctx context.Context, path, method, sha string
 		return res, nil
 	}
 
+	bodyReader, closeReader, err := responseBodyReader(res.Body, res.Header.Get("Content-Encoding"))
+	if err != nil {
+		return res, err
+	}
+	defer closeReader()
+
 	// else read the response body into a byte slice.
-	body, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		return res, err
 	}
@@ -569,6 +576,19 @@ func (c *HTTPClient) doWithOptions(ctx context.Context, path, method, sha string
 	return res, json.Unmarshal(body, out)
 }
 
+func responseBodyReader(body io.Reader, contentEncoding string) (io.Reader, func() error, error) {
+	if !strings.EqualFold(contentEncoding, "gzip") {
+		return body, func() error { return nil }, nil
+	}
+
+	gz, err := gzip.NewReader(body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return gz, gz.Close, nil
+}
+
 func encodeJSONBody(in interface{}, gzipBody bool) (io.Reader, string, error) {
 	if in == nil {
 		return nil, "", nil
@@ -584,13 +604,8 @@ func encodeJSONBody(in interface{}, gzipBody bool) (io.Reader, string, error) {
 
 	compressed := new(bytes.Buffer)
 	gz := gzip.NewWriter(compressed)
-	if _, err := gz.Write(raw.Bytes()); err != nil {
-		_ = gz.Close()
-		return nil, "", err
-	}
-	if err := gz.Close(); err != nil {
-		return nil, "", err
-	}
+	_, _ = gz.Write(raw.Bytes())
+	_ = gz.Close()
 
 	return compressed, "gzip", nil
 }
