@@ -124,15 +124,17 @@ type TestSuites struct {
 }
 
 type TestCase struct {
-	Name       string `json:"name"`
-	ClassName  string `json:"class_name"`
-	FileName   string `json:"file_name"`
-	SuiteName  string `json:"suite_name"`
-	Result     Result `json:"result"`
-	DurationMs int64  `json:"duration_ms"`
-	SystemOut  string `json:"stdout"`
-	SystemErr  string `json:"stderr"`
-	Flaky      bool   `json:"flaky"`
+	Name        string `json:"name"`
+	ClassName   string `json:"class_name"`
+	FileName    string `json:"file_name"`
+	SuiteName   string `json:"suite_name"`
+	Result      Result `json:"result"`
+	DurationMs  int64  `json:"duration_ms"`
+	SystemOut   string `json:"stdout"`
+	SystemErr   string `json:"stderr"`
+	Flaky       bool   `json:"flaky"`
+	Quarantine  bool   `json:"quarantine"`
+	Problematic bool   `json:"problematic"`
 }
 
 type TestSummary struct {
