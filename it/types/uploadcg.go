@@ -66,6 +66,14 @@ type Entry struct {
 	// Used to join graph segments across services for the same test.
 	ContextID string `json:"context_id"`
 
+	// TestChecksum is the xxhash64 of the test source file's bytes,
+	// computed by hcli at upload time. The chain stores this so future
+	// selection requests can detect "did this test code change?" by
+	// re-hashing the test file and comparing. Optional: agents that do
+	// not yet compute a test checksum may omit it; selection falls back
+	// to conservative behavior when absent.
+	TestChecksum string `json:"test_checksum,omitempty"`
+
 	// Root is the entry-point handler/servlet method that received the request.
 	Root Node `json:"root"`
 
@@ -76,13 +84,22 @@ type Entry struct {
 
 // Node is one source location touched during request processing.
 //
-// File is required. Class and Method are optional — not all languages or
-// frameworks expose method-level granularity (e.g. config classes,
-// model/POJO classes, scripting languages).
+// FilePath is required and is the source file path relative to the service's
+// repo root (no leading slash, forward slashes only). Class and Method are
+// optional — not all languages or frameworks expose method-level granularity
+// (e.g. config classes, model/POJO classes, scripting languages). When
+// present, Class is the fully-qualified class name (FQCN).
+//
+// Per-file content checksums are NOT carried on nodes. The build phase
+// uploads a manifest to a bucket containing per-file checksums; the
+// chain-stitching consumer fetches that manifest and stamps checksums onto
+// chain nodes at write time. Keeping nodes content-free keeps the upload
+// payload small and makes the build manifest the single source of truth
+// for file fingerprints.
 type Node struct {
-	File   string `json:"file"`
-	Class  string `json:"class,omitempty"`
-	Method string `json:"method,omitempty"`
+	FilePath string `json:"file_path"`
+	Class    string `json:"class,omitempty"`
+	Method   string `json:"method,omitempty"`
 }
 
 // UploadITGraphResponse is the body returned on successful 202 Accepted.
