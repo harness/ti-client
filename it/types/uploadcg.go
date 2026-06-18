@@ -4,115 +4,91 @@
 // https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
 // Package types defines the wire format for integration test (IT) call graph
-// uploads. The IT graph is a multi-service nested structure produced by hcli's
-// collection phase after a cross-service test run completes.
+// uploads.
+//
+// The upload is a tests-first JSON array. Each top-level entry is a service
+// block listing the tests that touched that service and the source files
+// they reached. The chain-stitching consumer uses service.uuid to fetch the
+// build manifest from GCS and stamp per-source content checksums onto the
+// stored chain (V2-equivalent reference for selection-time comparison).
+//
+// Platform identifiers (accountId, orgId, projectId, parentUniqueId,
+// uniqueId) ride as URL query params on POST /it/uploadcg, not in the body.
 package types
 
-// CollectionStatus indicates the outcome of collecting graph data from a service.
-type CollectionStatus string
-
-const (
-	CollectionStatusSuccess CollectionStatus = "success"
-	CollectionStatusPartial CollectionStatus = "partial"
-	CollectionStatusFailed  CollectionStatus = "failed"
-)
-
-// MaxRecursionDepth is the hard cap on nested downstream depth accepted by the
-// upload endpoint. Trees deeper than this are rejected.
-const MaxRecursionDepth = 10
-
-// UploadITGraphRequest is the top-level payload for POST /it/uploadcg.
+// UploadITGraphRequest is the top-level upload payload — a flat array of
+// service blocks.
 //
-// Platform identifiers (accountId, orgId, projectId, parentUniqueId, uniqueId)
-// are sent as URL query params, matching the V2 contract. Only the graph body
-// lives in the JSON payload.
-type UploadITGraphRequest struct {
-	// ExecutionID is agent-generated; carried for trace correlation only.
-	// Not part of the storage doc key.
-	ExecutionID string `json:"execution_id"`
+// Each block describes one service that the test run touched. Sources within
+// a block belong to that service (the file_path is relative to that
+// service's repo). No recursion or call-hierarchy is encoded; selection only
+// needs the union of (service, file) touches per test.
+type UploadITGraphRequest []ServiceBlock
 
-	// Service identifies the service that produced this graph block.
-	Service ServiceBlock `json:"service"`
-
-	// Entries are per-test-case tracked-source lists for this service.
-	Entries []Entry `json:"entries"`
-
-	// Downstream are graphs collected from services this service called.
-	Downstream []UploadITGraphRequest `json:"downstream,omitempty"`
-
-	// CollectionStatus indicates whether collection from this service (and its
-	// downstream) succeeded.
-	CollectionStatus CollectionStatus `json:"collection_status"`
-}
-
-// ServiceBlock identifies a service in the deployed TestEnv.
+// ServiceBlock identifies one service and the tests that exercised it.
 //
-// UUID is the build-phase anchor: TI service uses it to look up
-// (repo, commitSHA, source files, class mappings) registered when the
-// artifact was built.
+// host + port is the canonical service address — the load-balancer DNS hcli
+// uses for discovery. Pod IPs and internal aliases must be normalized to
+// this canonical form by hcli before upload so the chain's stored address
+// matches discovery's address at selection time.
 //
-// Name is the human-readable handle used as a join key in storage.
+// uuid is the build-phase anchor: TI service uses it to fetch the build
+// manifest from GCS at chain-write time and stamp per-source content
+// checksums onto the chain.
 //
-// Address is debug-only metadata (not used for joining or selection).
+// service_name is optional human-readable metadata; selection joins by
+// (host, port), not by name.
 type ServiceBlock struct {
-	UUID    string `json:"uuid"`
-	Name    string `json:"name"`
-	Address string `json:"address,omitempty"`
+	Service Service `json:"service"`
+	Tests   []Test  `json:"tests"`
 }
 
-// Entry represents one per-test-case tracked execution within a service.
-type Entry struct {
-	// ContextID is the per-test-case ID propagated via X-TI-Context-ID.
-	// Used to join graph segments across services for the same test.
-	ContextID string `json:"context_id"`
-
-	// TestChecksum is the xxhash64 of the test source file's bytes,
-	// computed by hcli at upload time. The chain stores this so future
-	// selection requests can detect "did this test code change?" by
-	// re-hashing the test file and comparing. Optional: agents that do
-	// not yet compute a test checksum may omit it; selection falls back
-	// to conservative behavior when absent.
-	TestChecksum string `json:"test_checksum,omitempty"`
-
-	// Root is the entry-point handler/servlet method that received the request.
-	Root Node `json:"root"`
-
-	// Nodes are all source files/classes/methods touched while processing
-	// the request keyed by ContextID.
-	Nodes []Node `json:"nodes"`
+// Service identifies a deployed service in the test environment.
+type Service struct {
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
+	UUID        string `json:"uuid"`
+	ServiceName string `json:"service_name,omitempty"`
 }
 
-// Node is one source location touched during request processing.
+// Test is one test case that ran against (and touched code in) the parent
+// service block.
 //
-// FilePath is required and is the source file path relative to the service's
-// repo root (no leading slash, forward slashes only). Class and Method are
-// optional — not all languages or frameworks expose method-level granularity
-// (e.g. config classes, model/POJO classes, scripting languages). When
-// present, Class is the fully-qualified class name (FQCN).
+// test_repo_url + test_file_path identify the test (the test repo is
+// typically a separate IT repo, not a deployed service). test_checksum is
+// xxhash64 of the test file's bytes, computed by hcli at upload time. There
+// is no build manifest for the test repo, so the upload is the only path
+// for test_checksum to reach storage. Selection compares the chain's stored
+// test_checksum against a freshly-computed checksum to detect test-side
+// changes.
+type Test struct {
+	TestRepoURL  string   `json:"test_repo_url"`
+	TestFilePath string   `json:"test_file_path"`
+	TestChecksum string   `json:"test_checksum"`
+	Sources      []Source `json:"sources"`
+}
+
+// Source is one source file/class/method that the test exercised within the
+// parent service.
 //
-// Per-file content checksums are NOT carried on nodes. The build phase
-// uploads a manifest to a bucket containing per-file checksums; the
-// chain-stitching consumer fetches that manifest and stamps checksums onto
-// chain nodes at write time. Keeping nodes content-free keeps the upload
-// payload small and makes the build manifest the single source of truth
-// for file fingerprints.
-type Node struct {
+// file_path is required and is the path relative to the service's repo
+// root. class (FQCN) and method are optional debug/UI metadata; selection
+// matches by file_path.
+//
+// Source-file content checksums are NOT carried here. They live in the
+// build manifest in GCS, indexed by service.uuid; the chain-stitching
+// consumer fetches them at write time. Keeping sources content-free keeps
+// the upload payload small and makes the build manifest the single source
+// of truth for file fingerprints.
+type Source struct {
 	FilePath string `json:"file_path"`
 	Class    string `json:"class,omitempty"`
 	Method   string `json:"method,omitempty"`
 }
 
-// UploadITGraphResponse is the body returned on successful 202 Accepted.
+// UploadITGraphResponse is the body returned on successful 200/202 from
+// POST /it/uploadcg.
 type UploadITGraphResponse struct {
-	ParentUniqueID   string      `json:"parentUniqueId"`
-	UniqueID         string      `json:"uniqueId"`
-	ServicesAccepted int         `json:"services_accepted"`
-	Warnings         []ITWarning `json:"warnings,omitempty"`
-}
-
-// ITWarning is a per-service validation issue that did not cause the upload to
-// be rejected (e.g. one service had malformed nodes, others were fine).
-type ITWarning struct {
-	Service string `json:"service"`
-	Msg     string `json:"msg"`
+	Status string `json:"status"`
+	Path   string `json:"path"`
 }
