@@ -78,4 +78,10 @@ type Client interface {
 	// Forward makes a request to the TI service at the given path with the given method and body.
 	// The body should be a JSON string. This is a generic method for forwarding requests to the TI service.
 	Forward(ctx context.Context, method, path string, body string) (*http.Response, error)
+
+	// ForwardWithRetry is like Forward but transparently retries on transient
+	// failures (TCP RST, ECONNREFUSED, optionally 5xx) using exponential backoff
+	// bounded by opts.MaxElapsed. Callers opt in per call site so non-idempotent
+	// operations can keep using Forward (no retry). See ForwardRetryOptions.
+	ForwardWithRetry(ctx context.Context, method, path, body string, opts ForwardRetryOptions) (*http.Response, error)
 }

@@ -818,3 +818,98 @@ func (c *HTTPClient) Forward(ctx context.Context, method, path string, body stri
 
 	return c.open(ctx, url, method, reqBody)
 }
+
+// ForwardRetryOptions controls retry behavior for ForwardWithRetry.
+//
+// Forward (without retry) is used for many paths whose semantics vary —
+// some are idempotent reads, some are non-idempotent state mutations.
+// Blanket-retrying every Forward call is unsafe. ForwardWithRetry lets the
+// caller opt in per call site and tune the policy for that endpoint.
+//
+// MaxElapsed bounds total time spent retrying (including the initial attempt's
+// network time). A zero MaxElapsed disables retry entirely, which is useful
+// for unit tests and for codepaths that want explicit "no retry" intent.
+//
+// RetryOnServerErrors=true retries on 5xx status codes in addition to network
+// errors. Safe for idempotent reads (e.g. /v2/stage-batch, /quarantined) and
+// for upserts keyed by build-id (e.g. /v2/select-and-split where re-running
+// the split for the same build produces the same data).
+// Setting it to false retries only on transport-layer errors (TCP RST,
+// connection refused, DNS), not on server-returned 5xx — appropriate for
+// non-idempotent POSTs where a 500 may have partially applied.
+type ForwardRetryOptions struct {
+	// MaxElapsed bounds total retry time. Zero disables retries.
+	MaxElapsed time.Duration
+	// RetryOnServerErrors enables retry on 5xx responses in addition to
+	// network-layer errors. Only set to true for idempotent operations.
+	RetryOnServerErrors bool
+}
+
+// ForwardWithRetry behaves like Forward but transparently retries on transient
+// failures (TCP RST, ECONNREFUSED, network blips, optionally 5xx responses)
+// using exponential backoff bounded by opts.MaxElapsed.
+//
+// Use this instead of Forward for high-burst call paths where a small fraction
+// of requests will hit transient TCP-layer errors during the request burst —
+// e.g. nginx keepalive recycling, load balancer connection draining. The
+// retry budget is the caller's choice based on the endpoint's idempotency.
+//
+// For non-idempotent state mutations, prefer Forward (no retry) or pass
+// opts.RetryOnServerErrors=false so only pre-send transport errors retry.
+//
+// The body string is held verbatim so a fresh io.Reader can be constructed
+// on each retry; callers do not need to worry about reader exhaustion.
+func (c *HTTPClient) ForwardWithRetry(ctx context.Context, method, path, body string, opts ForwardRetryOptions) (*http.Response, error) {
+	url := c.Endpoint + path
+
+	doOnce := func() (*http.Response, error) {
+		// Fresh reader per attempt — strings.NewReader is single-shot,
+		// so reusing it across retries would silently send an empty body.
+		var reqBody io.Reader
+		if body != "" {
+			reqBody = strings.NewReader(body)
+		}
+		return c.open(ctx, url, method, reqBody)
+	}
+
+	if opts.MaxElapsed <= 0 {
+		// Zero MaxElapsed = no retry; behave exactly like Forward.
+		return doOnce()
+	}
+
+	b := createBackoff(opts.MaxElapsed)
+	for {
+		res, err := doOnce()
+
+		// Honour context cancellation/deadline immediately.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return res, ctxErr
+		}
+
+		duration := b.NextBackOff()
+
+		// Retry on 5xx if caller opted in.
+		if res != nil && res.StatusCode >= 500 && opts.RetryOnServerErrors {
+			// Drain + close the body so the connection can be reused.
+			_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 4096))
+			_ = res.Body.Close()
+			if duration == backoff.Stop {
+				return res, err
+			}
+			time.Sleep(duration)
+			continue
+		}
+
+		// Retry on transport-layer errors (TCP RST, conn refused, etc.).
+		if res == nil && err != nil {
+			if duration == backoff.Stop {
+				return nil, err
+			}
+			time.Sleep(duration)
+			continue
+		}
+
+		// Success or non-retriable response.
+		return res, err
+	}
+}
