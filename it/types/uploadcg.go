@@ -8,17 +8,23 @@
 //
 // The upload is a JSON object with the IT test repo URL hoisted to the top
 // level (invariant within one run) and a `graph` array of service blocks.
-// Each block lists the tests that touched that service and the source files
-// they reached. The chain-stitching consumer uses repo_uuid to fetch the
-// build manifest from GCS and stamp per-source content checksums onto the
-// stored chain (V2-equivalent reference for selection-time comparison).
+// Each block lists the tests that touched that service and the sources they
+// reached. Each source carries its own repo_uuid that anchors back to a
+// per-build manifest in GCS — a deployed service typically contains classes
+// from multiple jars, and each jar is built from a different repo, so the
+// build identity is per-source, not per-service.
+//
+// The chain-stitching consumer (separate ticket) reads each source's
+// repo_uuid, fetches the matching manifest, stamps per-source content
+// checksums onto the stored chain (V2-equivalent reference for
+// selection-time comparison).
 //
 // Platform identifiers (accountId, cgId) ride as URL query params on
 // POST /it/uploadcg, not in the body.
 //
 // The body is gzipped on the wire and stored verbatim in GCS at
 // it_callgraphs/{accountId}/{cgId}/callgraph.json.gz. ti-service does not
-// decompress or parse the body; the consumer (separate ticket) does that.
+// decompress or parse the body; the consumer does that.
 package types
 
 // UploadITGraphRequest is the top-level upload payload.
@@ -48,20 +54,17 @@ type ServiceBlock struct {
 
 // Service identifies a deployed service in the test environment.
 //
-// RepoUUID is the build-phase anchor identifying the repo+commit that this
-// service was built from. TI service uses it to fetch the build manifest
-// from GCS at chain-write time and stamp per-source content checksums onto
-// the chain. Named "repo_uuid" rather than "service_uuid" because the
-// fingerprint identifies a built-from-source artifact, not a service
-// instance — monorepo deploys where one repo builds multiple services
-// share a single RepoUUID across their service blocks.
+// This block carries only the deployed-instance identity (host, port,
+// optional human-readable name). Build identity (RepoUUID) lives per-source
+// because a single deployed service typically loads classes from many jars
+// — each jar built from a different repo — and each jar has its own build
+// manifest. See Source.RepoUUID.
 //
 // ServiceName is optional human-readable metadata; selection joins by
 // (Host, Port), not by name.
 type Service struct {
 	Host        string `json:"host"`
 	Port        int    `json:"port"`
-	RepoUUID    string `json:"repo_uuid"`
 	ServiceName string `json:"service_name,omitempty"`
 }
 
@@ -83,6 +86,14 @@ type Test struct {
 // Source is one source file/class/method that the test exercised within
 // the parent service.
 //
+// RepoUUID is the build-phase anchor identifying the repo+commit that THIS
+// SOURCE was built from. Lives on the source (not the service) because a
+// deployed service typically contains classes from multiple jars, each
+// built from a different repo (the service's own code, internal shared
+// libraries, etc.). The consumer fetches the manifest at
+// manifests/{accountId}/{RepoUUID}/manifest.json.gz to resolve file paths
+// and content checksums for this source.
+//
 // JVM agents emit Jar + Class (FQCN) — that pair joins directly with the
 // build manifest's class_to_file map (keyed by "{jar}:{FQCN}") so the
 // consumer can resolve to a file path and look up the file's content
@@ -90,12 +101,17 @@ type Test struct {
 // (Jar AND Class) or FilePath must be present per source; both is fine
 // and recommended for JVM where both are reliably available.
 //
+// Third-party / non-instrumented jars (no RepoUUID available) should be
+// dropped by the agent — they have no manifest and contribute nothing to
+// selection.
+//
 // Source-file content checksums are NOT carried here. They live in the
-// build manifest in GCS, indexed by Service.RepoUUID; the chain-stitching
-// consumer fetches them at write time. Keeping sources content-free keeps
-// the upload small and makes the build manifest the single source of
-// truth for file fingerprints.
+// build manifest in GCS, indexed by RepoUUID; the chain-stitching consumer
+// fetches them at write time. Keeping sources content-free keeps the
+// upload small and makes the build manifest the single source of truth
+// for file fingerprints.
 type Source struct {
+	RepoUUID string `json:"repo_uuid"`
 	Jar      string `json:"jar,omitempty"`
 	Class    string `json:"class,omitempty"`
 	Method   string `json:"method,omitempty"`
