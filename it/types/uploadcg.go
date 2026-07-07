@@ -77,9 +77,19 @@ type Service struct {
 // the test repo, so the upload is the only path for the checksum to reach
 // storage. Selection compares the chain's stored TestChecksum against a
 // freshly-computed checksum to detect test-side changes.
+//
+// State is the test's outcome in this run (SUCCESS / FAILURE / FLAKY /
+// UNKNOWN — the same vocabulary as the chrysalis chain state). The
+// chain-stitching consumer stamps it onto every chain row it writes for
+// this test, so selection can bucket a matched chain into skip vs. must-run
+// exactly like V2: a stored chain whose state is FAILURE forces a re-run
+// even when nothing changed; SUCCESS (and other non-FAILURE states) allow a
+// skip when the recomputed chain checksum still matches. Empty is treated
+// as UNKNOWN by the consumer.
 type Test struct {
 	TestFilePath string   `json:"test_file_path"`
 	TestChecksum string   `json:"test_checksum"`
+	State        string   `json:"state,omitempty"`
 	Sources      []Source `json:"sources"`
 }
 
