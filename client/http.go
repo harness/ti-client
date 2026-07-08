@@ -47,6 +47,7 @@ const (
 
 	// chrysalis (v2)
 	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
+	uploadITCgEndpoint       = "/it/uploadcg?accountId=%s&cgId=%s"
 	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
 	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
 	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
@@ -288,6 +289,23 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.Upl
 	reader := strings.NewReader(string(jsonPayload))
 	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch, c.ParentUniqueID)
 	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	return err
+}
+
+// UploadITCg uploads gzipped integration test callgraph to ti-service.
+// cgId is the dedup key for idempotent uploads. payload must be pre-gzipped by caller.
+func (c *HTTPClient) UploadITCg(ctx context.Context, payload []byte, cgId string) error {
+	if err := c.validateTiArgs(); err != nil {
+		return err
+	}
+	backoff := createBackoff(45 * 60 * time.Second)
+
+	// ponytail: payload already gzipped by hcli
+	reader := bytes.NewReader(payload)
+
+	// ponytail: only accountId + cgId required per ti-service handler
+	path := fmt.Sprintf(uploadITCgEndpoint, c.AccountID, cgId)
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
 	return err
 }
 
