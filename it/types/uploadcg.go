@@ -127,10 +127,3 @@ type Source struct {
 	Method   string `json:"method,omitempty"`
 	FilePath string `json:"file_path,omitempty"`
 }
-
-// UploadITGraphResponse is the body returned on successful 200/202 from
-// POST /it/uploadcg.
-type UploadITGraphResponse struct {
-	Status string `json:"status"`
-	Path   string `json:"path"`
-}
