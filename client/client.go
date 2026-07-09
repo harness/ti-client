@@ -34,6 +34,10 @@ type Client interface {
 	// UploadCgV2 uploads JSON payload to /uploadcg endpoint
 	UploadCgV2(ctx context.Context, jsonPayload v2types.UploadCgRequest, stepID string, timeMs int64, sourceBranch string, targetBranch string) error
 
+	// UploadITCg uploads gzipped integration test callgraph to ti-service.
+	// cgId is the dedup key for idempotent uploads. payload must be pre-gzipped.
+	UploadITCg(ctx context.Context, payload []byte, cgId string) error
+
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
 	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error
 
