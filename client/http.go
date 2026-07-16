@@ -7,6 +7,7 @@ package client
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -230,7 +231,7 @@ func (c *HTTPClient) Write(ctx context.Context, stepID, report string, tests []*
 	}
 	path := fmt.Sprintf(dbEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, report, c.Repo, c.Sha, c.CommitLink, c.ParentUniqueID)
 	backoff := createBackoff(10 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &tests, nil, false, false, backoff) //nolint:bodyclose
+	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", c.Sha, &tests, nil, false, false, backoff, true) //nolint:bodyclose
 	return err
 }
 
@@ -257,7 +258,7 @@ func (c *HTTPClient) SelectTests(ctx context.Context, stepID, source, target str
 		path += "&failedTestRerunEnabled=true"
 	}
 	backoff := createBackoff(10 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp, false, false, backoff) //nolint:bodyclose
+	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", c.Sha, in, &resp, false, false, backoff, true) //nolint:bodyclose
 	return resp, err
 }
 
@@ -281,14 +282,8 @@ func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.Upl
 		return err
 	}
 	backoff := createBackoff(45 * 60 * time.Second)
-
-	jsonPayload, err := json.Marshal(uploadCgRequest)
-	if err != nil {
-		return err
-	}
-	reader := strings.NewReader(string(jsonPayload))
 	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch, c.ParentUniqueID)
-	_, err = c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", "", uploadCgRequest, nil, false, true, backoff, true) //nolint:bodyclose
 	return err
 }
 
@@ -315,7 +310,7 @@ func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, targe
 	}
 	path := fmt.Sprintf(endpoint, c.AccountID, c.OrgID, c.ProjectID, c.PipelineID, c.BuildID, c.StageID, stepID, c.Repo, c.Sha, source, target, timeMs, c.ParentUniqueID)
 	backoff := createBackoff(45 * 60 * time.Second)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, true, backoff) //nolint:bodyclose
+	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", c.Sha, &cg, nil, false, true, backoff, true) //nolint:bodyclose
 	return err
 }
 
@@ -404,7 +399,7 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, req v2types.SkipTestsRequ
 	}
 
 	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID)
-	_, err := c.do(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp) //nolint:bodyclose
+	_, err := c.doWithOptions(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp, true) //nolint:bodyclose
 	return resp, err
 }
 
@@ -463,11 +458,15 @@ func (c *HTTPClient) DownloadAgent(ctx context.Context, path string) (io.ReadClo
 }
 
 func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, out interface{}, isOpen, retryOnServerErrors bool, b backoff.BackOff) (*http.Response, error) {
+	return c.retryWithOptions(ctx, method, path, sha, in, out, isOpen, retryOnServerErrors, b, false)
+}
+
+func (c *HTTPClient) retryWithOptions(ctx context.Context, method, path, sha string, in, out interface{}, isOpen, retryOnServerErrors bool, b backoff.BackOff, gzipBody bool) (*http.Response, error) {
 	for {
 		var res *http.Response
 		var err error
 		if !isOpen {
-			res, err = c.do(ctx, method, path, sha, in, out)
+			res, err = c.doWithOptions(ctx, method, path, sha, in, out, gzipBody)
 		} else {
 			res, err = c.open(ctx, method, path, in.(io.Reader))
 		}
@@ -508,14 +507,19 @@ func (c *HTTPClient) retry(ctx context.Context, method, path, sha string, in, ou
 // do is a helper function that posts a signed http request with
 // the input encoded and response decoded from json.
 func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out interface{}) (*http.Response, error) { //nolint:unparam
+	return c.doWithOptions(ctx, path, method, sha, in, out, false)
+}
+
+func (c *HTTPClient) doWithOptions(ctx context.Context, path, method, sha string, in, out interface{}, gzipBody bool) (*http.Response, error) { //nolint:unparam
 	var r io.Reader
+	var contentEncoding string
 
 	if in != nil {
-		buf := new(bytes.Buffer)
-		if err := json.NewEncoder(buf).Encode(in); err != nil {
+		var err error
+		r, contentEncoding, err = encodeJSONBody(in, gzipBody)
+		if err != nil {
 			return nil, err
 		}
-		r = buf
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, path, r)
@@ -527,6 +531,13 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 	// adding sha as request-id for logging context
 	if sha != "" {
 		req.Header.Add("X-Request-ID", sha)
+	}
+	if in != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if contentEncoding != "" {
+		req.Header.Set("Content-Encoding", contentEncoding)
+		req.Header.Set("Accept-Encoding", "gzip")
 	}
 	res, err := c.client().Do(req)
 	if res != nil {
@@ -549,8 +560,14 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 		return res, nil
 	}
 
+	bodyReader, closeReader, err := responseBodyReader(res.Body, res.Header.Get("Content-Encoding"))
+	if err != nil {
+		return res, err
+	}
+	defer closeReader()
+
 	// else read the response body into a byte slice.
-	body, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		return res, err
 	}
@@ -575,6 +592,40 @@ func (c *HTTPClient) do(ctx context.Context, path, method, sha string, in, out i
 		return res, nil
 	}
 	return res, json.Unmarshal(body, out)
+}
+
+func responseBodyReader(body io.Reader, contentEncoding string) (io.Reader, func() error, error) {
+	if !strings.EqualFold(contentEncoding, "gzip") {
+		return body, func() error { return nil }, nil
+	}
+
+	gz, err := gzip.NewReader(body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return gz, gz.Close, nil
+}
+
+func encodeJSONBody(in interface{}, gzipBody bool) (io.Reader, string, error) {
+	if in == nil {
+		return nil, "", nil
+	}
+
+	raw := new(bytes.Buffer)
+	if err := json.NewEncoder(raw).Encode(in); err != nil {
+		return nil, "", err
+	}
+	if !gzipBody {
+		return raw, "", nil
+	}
+
+	compressed := new(bytes.Buffer)
+	gz := gzip.NewWriter(compressed)
+	_, _ = gz.Write(raw.Bytes())
+	_ = gz.Close()
+
+	return compressed, "gzip", nil
 }
 
 // isPAT reports whether the client token is a Personal Access Token
