@@ -280,12 +280,22 @@ func (c *HTTPClient) UploadCg(ctx context.Context, stepID, source, target string
 
 // UploadCgV2 uploads JSON payload to /uploadcg endpoint
 func (c *HTTPClient) UploadCgV2(ctx context.Context, uploadCgRequest v2types.UploadCgRequest, stepID string, timeMs int64, sourceBranch string, targetBranch string) error {
+	jsonPayload, err := json.Marshal(uploadCgRequest)
+	if err != nil {
+		return err
+	}
+	return c.UploadCgV2JSON(ctx, jsonPayload, stepID, timeMs, sourceBranch, targetBranch)
+}
+
+// UploadCgV2JSON uploads a pre-marshaled JSON payload to /v2/uploadcg.
+// Callers that need the payload size for logging should marshal once and pass the bytes here.
+func (c *HTTPClient) UploadCgV2JSON(ctx context.Context, jsonPayload []byte, stepID string, timeMs int64, sourceBranch string, targetBranch string) error {
 	if err := c.validateTiArgs(); err != nil {
 		return err
 	}
 	backoff := createBackoff(45 * 60 * time.Second)
 	path := fmt.Sprintf(uploadcgEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.StageID, stepID, timeMs, sourceBranch, targetBranch, c.ParentUniqueID)
-	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", "", uploadCgRequest, nil, false, true, backoff, true) //nolint:bodyclose
+	_, err := c.retryWithOptions(ctx, c.Endpoint+path, "POST", "", json.RawMessage(jsonPayload), nil, false, true, backoff, true) //nolint:bodyclose
 	return err
 }
 
