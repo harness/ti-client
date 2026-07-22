@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	v2types "github.com/harness/ti-client/chrysalis/types"
+	ittypes "github.com/harness/ti-client/it/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -37,6 +38,10 @@ type Client interface {
 	// UploadITCg uploads gzipped integration test callgraph to ti-service.
 	// cgId is the dedup key for idempotent uploads. payload must be pre-gzipped.
 	UploadITCg(ctx context.Context, payload []byte, cgId string) error
+
+	// SelectIT posts file checksums + discovered deployments to /it/select
+	// and returns skip/failed test lists (same response shape as GetSkipTests).
+	SelectIT(ctx context.Context, req ittypes.SelectITRequest) (types.SkipTestResponse, error)
 
 	// UploadCgFailedTest uploads avro encoded callgraph to ti server but skips updating lastSuccComit
 	UploadCgFailedTest(ctx context.Context, step, source, target string, timeMs int64, cg []byte) error

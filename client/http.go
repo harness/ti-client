@@ -25,6 +25,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	v2types "github.com/harness/ti-client/chrysalis/types"
+	ittypes "github.com/harness/ti-client/it/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -49,6 +50,7 @@ const (
 	// chrysalis (v2)
 	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
 	uploadITCgEndpoint       = "/it/uploadcg?accountId=%s&cgId=%s"
+	selectITEndpoint         = "/it/select?accountId=%s"
 	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
 	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
 	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
@@ -302,6 +304,20 @@ func (c *HTTPClient) UploadITCg(ctx context.Context, payload []byte, cgId string
 	path := fmt.Sprintf(uploadITCgEndpoint, c.AccountID, cgId)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
 	return err
+}
+
+// SelectIT posts checksums + discovered deployments to /it/select and returns
+// skip/failed lists. accountId is taken from the client; only that query param
+// is required by the ti-service handler.
+func (c *HTTPClient) SelectIT(ctx context.Context, req ittypes.SelectITRequest) (types.SkipTestResponse, error) {
+	var resp types.SkipTestResponse
+	if err := c.validateTiArgs(); err != nil {
+		return resp, err
+	}
+
+	path := fmt.Sprintf(selectITEndpoint, c.AccountID)
+	_, err := c.doWithOptions(ctx, c.Endpoint+path, "POST", "", req, &resp, true) //nolint:bodyclose
+	return resp, err
 }
 
 func (c *HTTPClient) uploadCGInternal(ctx context.Context, stepID, source, target string, timeMs int64, cg []byte, endpoint string) error {
