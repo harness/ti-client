@@ -316,7 +316,7 @@ func (c *HTTPClient) SelectIT(ctx context.Context, req ittypes.SelectITRequest) 
 	}
 
 	path := fmt.Sprintf(selectITEndpoint, c.AccountID)
-	_, err := c.doWithOptions(ctx, c.Endpoint+path, "POST", "", req, &resp, true) //nolint:bodyclose
+	_, err := c.doWithOptions(ctx, c.Endpoint+path, "POST", "", req, &resp, false) //nolint:bodyclose
 	return resp, err
 }
 
