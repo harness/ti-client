@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	v2types "github.com/harness/ti-client/chrysalis/types"
+	ittypes "github.com/harness/ti-client/it/types"
 	"github.com/harness/ti-client/types"
 )
 
@@ -246,6 +247,74 @@ func TestRequestsSendGzipBodies(t *testing.T) {
 		}
 		if gotRepo != "repo" {
 			t.Fatalf("UploadCgV2 should preserve payload, got repo %q", gotRepo)
+		}
+	})
+
+	t.Run("SelectIT sends gzip body", func(t *testing.T) {
+		var (
+			gotEncoding       string
+			gotAcceptEncoding string
+			gotPath           string
+			gotAccountID      string
+			gotRepoURL        string
+		)
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotEncoding = r.Header.Get("Content-Encoding")
+			gotAcceptEncoding = r.Header.Get("Accept-Encoding")
+			gotPath = r.URL.Path
+			gotAccountID = r.URL.Query().Get("accountId")
+
+			var req ittypes.SelectITRequest
+			if err := json.Unmarshal(decodeRequestBody(t, r), &req); err != nil {
+				t.Fatalf("failed to decode request body: %v", err)
+			}
+			gotRepoURL = req.TestRepoURL
+			_ = json.NewEncoder(w).Encode(types.SkipTestResponse{
+				SkipTests:   []string{"pkg.TestA"},
+				FailedTests: []string{"pkg.TestB"},
+			})
+		}))
+		defer server.Close()
+
+		c := &HTTPClient{
+			Client:    noAutoGzipClient(),
+			Endpoint:  server.URL,
+			Token:     "token",
+			AccountID: "account",
+		}
+
+		resp, err := c.SelectIT(context.Background(), ittypes.SelectITRequest{
+			TestRepoURL: "https://github.com/org/tests.git",
+			Files:       map[string]string{"src/TestA.java": "abc123"},
+			Deployment: []ittypes.DeployedRepo{
+				{RepoURL: "https://github.com/org/svc.git", RepoUUID: "uuid-1"},
+			},
+		})
+		if err != nil {
+			t.Fatalf("SelectIT returned error: %v", err)
+		}
+
+		if gotEncoding != "gzip" {
+			t.Fatalf("SelectIT should set Content-Encoding=gzip when enabled, got %q", gotEncoding)
+		}
+		if gotAcceptEncoding != "gzip" {
+			t.Fatalf("SelectIT should set Accept-Encoding=gzip when gzip is enabled, got %q", gotAcceptEncoding)
+		}
+		if gotPath != "/it/select" {
+			t.Fatalf("SelectIT should call /it/select, got %q", gotPath)
+		}
+		if gotAccountID != "account" {
+			t.Fatalf("SelectIT should send accountId query param, got %q", gotAccountID)
+		}
+		if gotRepoURL != "https://github.com/org/tests.git" {
+			t.Fatalf("SelectIT should preserve payload, got test_repo_url %q", gotRepoURL)
+		}
+		if len(resp.SkipTests) != 1 || resp.SkipTests[0] != "pkg.TestA" {
+			t.Fatalf("SelectIT should decode skipTests, got %+v", resp.SkipTests)
+		}
+		if len(resp.FailedTests) != 1 || resp.FailedTests[0] != "pkg.TestB" {
+			t.Fatalf("SelectIT should decode failedTests, got %+v", resp.FailedTests)
 		}
 	})
 }
