@@ -51,11 +51,23 @@ const (
 	uploadcgEndpoint         = "/v2/uploadcg?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&timeMs=%d&sourceBranch=%s&targetBranch=%s&parentUniqueId=%s"
 	uploadITCgEndpoint       = "/it/uploadcg?accountId=%s&cgId=%s"
 	selectITEndpoint         = "/it/select?accountId=%s"
-	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s"
-	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
+	skipTestsEndpoint        = "/v2/select?accountId=%s&orgId=%s&projectId=%s&repo=%s&parentUniqueId=%s&coverageEnabled=%t"
+	selectAndSplitEndpoint   = "/v2/select-and-split?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s&coverageEnabled=%t"
 	stageBatchEndpoint       = "/v2/stage-batch?accountId=%s&orgId=%s&projectId=%s&repo=%s&pipelineId=%s&buildId=%s&parentUniqueId=%s"
 	quarantinedTestsEndpoint = "/test-management/quarantined?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
+
+// disableCoverageEnvVar is set by hcli (via the --disable-coverage flag) to
+// signal that code coverage collection is disabled for this run.
+const disableCoverageEnvVar = "HTX_DISABLE_COVERAGE"
+
+// coverageEnabled reports whether code coverage is being collected. It is
+// forwarded to the V2 selection endpoints as the coverageEnabled query param so
+// ti-service validates the skip list against the Coverage Server. Coverage is
+// on by default and disabled only when hcli sets HTX_DISABLE_COVERAGE.
+func coverageEnabled() bool {
+	return os.Getenv(disableCoverageEnvVar) == ""
+}
 
 // defaultClient is the default http.Client.
 var defaultClient = &http.Client{
@@ -414,7 +426,7 @@ func (c *HTTPClient) GetSkipTests(ctx context.Context, req v2types.SkipTestsRequ
 		return resp, err
 	}
 
-	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID)
+	path := fmt.Sprintf(skipTestsEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.ParentUniqueID, coverageEnabled())
 	_, err := c.doWithOptions(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp, true) //nolint:bodyclose
 	return resp, err
 }
@@ -425,7 +437,7 @@ func (c *HTTPClient) SelectAndSplit(ctx context.Context, req v2types.SelectAndSp
 	if err := c.validateBasicArgs(); err != nil {
 		return resp, err
 	}
-	path := fmt.Sprintf(selectAndSplitEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.ParentUniqueID)
+	path := fmt.Sprintf(selectAndSplitEndpoint, c.AccountID, c.OrgID, c.ProjectID, c.Repo, c.PipelineID, c.BuildID, c.ParentUniqueID, coverageEnabled())
 	backoff := createBackoff(10 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", c.Sha, req, &resp, false, true, backoff) //nolint:bodyclose
 	return resp, err
