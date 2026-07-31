@@ -354,6 +354,11 @@ type CommitInfoResp struct {
 type SkipTestResponse struct {
 	SkipTests   []string `json:"skipTests"`
 	FailedTests []string `json:"failedTests"`
+	// SkipTestChecksums maps each skipped test path to its chain checksum (the
+	// coverage key TI used to validate the skip). hcli reports these chain
+	// checksums back to the Coverage Server when it sends the coverage request,
+	// keeping the coverage keys consistent with TI's skip decision.
+	SkipTestChecksums map[string]string `json:"skipTestChecksums,omitempty"`
 }
 
 // MarkedTest represents a test that has been marked (flaky or quarantined)
