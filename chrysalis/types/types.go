@@ -34,6 +34,10 @@ type SelectAndSplitResponse struct {
 	Parallelism         int           `json:"parallelism"`
 	TotalSelectedTests  int           `json:"totalSelectedTests"`
 	EstimatedDurationMs map[int]int64 `json:"estimatedDurationMs"`
+	// SkipTestChecksums maps each skipped test path to its chain checksum (the
+	// coverage key TI used to validate the skip), so hcli can report those chain
+	// checksums to the Coverage Server when sending the coverage request.
+	SkipTestChecksums map[string]string `json:"skipTestChecksums,omitempty"`
 }
 
 type StageBatchRequest struct {
