@@ -253,6 +253,17 @@ When adding tests (if test files exist):
 - Test validation functions separately
 - Test retry logic with mock servers
 
+### Race detection (required)
+
+Always run tests with the race detector. Use the Makefile targets from the repo root:
+
+```bash
+make test        # go test -race ./...
+make test-short  # go test -race -short ./...
+```
+
+PR / CI checks should invoke `make test` (or equivalent `go test -race ./...`) so data races do not regress. Do not treat a green suite without `-race` as sufficient.
+
 ## Dependencies
 
 ### External

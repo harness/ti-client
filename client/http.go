@@ -309,12 +309,11 @@ func (c *HTTPClient) UploadITCg(ctx context.Context, payload []byte, cgId string
 	}
 	backoff := createBackoff(45 * 60 * time.Second)
 
-	// ponytail: payload already gzipped by hcli
-	reader := bytes.NewReader(payload)
-
-	// ponytail: only accountId + cgId required per ti-service handler
+	// Pass raw bytes (not an io.Reader) so retryWithOptions can build a fresh
+	// bytes.Reader on every attempt. Reusing a single reader would silently
+	// send an empty body after the first attempt consumed it.
 	path := fmt.Sprintf(uploadITCgEndpoint, c.AccountID, cgId)
-	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", reader, nil, true, true, backoff) //nolint:bodyclose
+	_, err := c.retry(ctx, c.Endpoint+path, "POST", "", payload, nil, true, true, backoff) //nolint:bodyclose
 	return err
 }
 
@@ -496,13 +495,22 @@ func (c *HTTPClient) retryWithOptions(ctx context.Context, method, path, sha str
 		if !isOpen {
 			res, err = c.doWithOptions(ctx, method, path, sha, in, out, gzipBody)
 		} else {
-			res, err = c.open(ctx, method, path, in.(io.Reader))
+			// isOpen sends a raw body (e.g. pre-gzipped UploadITCg). in must be
+			// []byte so each attempt gets a fresh reader — a reused io.Reader
+			// is exhausted after the first attempt and retries would POST empty.
+			payload, ok := in.([]byte)
+			if !ok {
+				return nil, fmt.Errorf("isOpen retry requires []byte body, got %T", in)
+			}
+			res, err = c.open(ctx, method, path, bytes.NewReader(payload))
 		}
 
 		// do not retry on Canceled or DeadlineExceeded
-		if err := ctx.Err(); err != nil {
-			// Context cancelled
-			return res, err
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			if isOpen {
+				drainAndClose(res)
+			}
+			return nil, ctxErr
 		}
 
 		duration := b.NextBackOff()
@@ -513,12 +521,34 @@ func (c *HTTPClient) retryWithOptions(ctx context.Context, method, path, sha str
 			// 5xx's are typically not permanent errors and may
 			// relate to outages on the server side.
 			if res.StatusCode >= 500 && retryOnServerErrors {
-				// TI server error: Reconnect and retry
+				if isOpen {
+					// open() leaves err=nil on HTTP 5xx; drain/close and
+					// return a real error on exhaustion (never nil,nil).
+					statusErr := statusError(res)
+					drainAndClose(res)
+					if duration == backoff.Stop {
+						return nil, statusErr
+					}
+					time.Sleep(duration)
+					continue
+				}
+				// JSON path: doWithOptions already closed the body and set err.
 				if duration == backoff.Stop {
 					return nil, err
 				}
 				time.Sleep(duration)
 				continue
+			}
+			if isOpen {
+				// isOpen callers (UploadITCg) discard the response; map non-2xx
+				// to an error and always drain/close so connections are reused.
+				if res.StatusCode >= http.StatusMultipleChoices {
+					statusErr := statusError(res)
+					drainAndClose(res)
+					return nil, statusErr
+				}
+				drainAndClose(res)
+				return nil, nil
 			}
 		} else if err != nil {
 			// Request error: Retry
@@ -530,6 +560,25 @@ func (c *HTTPClient) retryWithOptions(ctx context.Context, method, path, sha str
 		}
 		return res, err
 	}
+}
+
+// drainAndClose discards up to 4KiB of the response body and closes it so the
+// underlying connection can be returned to the idle pool.
+func drainAndClose(res *http.Response) {
+	if res == nil || res.Body == nil {
+		return
+	}
+	_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 4096))
+	_ = res.Body.Close()
+}
+
+// statusError builds a client.Error from an HTTP response status. Prefer the
+// status text over a nil error so retry exhaustion never reports success.
+func statusError(res *http.Response) *Error {
+	if res == nil {
+		return &Error{Code: 0, Message: "empty response"}
+	}
+	return &Error{Code: res.StatusCode, Message: http.StatusText(res.StatusCode)}
 }
 
 // do is a helper function that posts a signed http request with
@@ -987,11 +1036,16 @@ func (c *HTTPClient) ForwardWithRetry(ctx context.Context, method, path, body st
 
 		// Retry on 5xx if caller opted in.
 		if res != nil && res.StatusCode >= 500 && opts.RetryOnServerErrors {
+			statusErr := statusError(res)
 			// Drain + close the body so the connection can be reused.
-			_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 4096))
-			_ = res.Body.Close()
+			drainAndClose(res)
 			if duration == backoff.Stop {
-				return res, err
+				// Body already closed — return nil so callers do not try to
+				// read a closed Body. Prefer a status-bearing error over nil.
+				if statusErr != nil {
+					return nil, statusErr
+				}
+				return nil, err
 			}
 			time.Sleep(duration)
 			continue

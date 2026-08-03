@@ -250,18 +250,16 @@ func TestRequestsSendGzipBodies(t *testing.T) {
 		}
 	})
 
-	t.Run("SelectIT sends gzip body", func(t *testing.T) {
+	t.Run("SelectIT posts JSON body", func(t *testing.T) {
 		var (
-			gotEncoding       string
-			gotAcceptEncoding string
-			gotPath           string
-			gotAccountID      string
-			gotRepoURL        string
+			gotEncoding  string
+			gotPath      string
+			gotAccountID string
+			gotRepoURL   string
 		)
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			gotEncoding = r.Header.Get("Content-Encoding")
-			gotAcceptEncoding = r.Header.Get("Accept-Encoding")
 			gotPath = r.URL.Path
 			gotAccountID = r.URL.Query().Get("accountId")
 
@@ -295,11 +293,10 @@ func TestRequestsSendGzipBodies(t *testing.T) {
 			t.Fatalf("SelectIT returned error: %v", err)
 		}
 
-		if gotEncoding != "gzip" {
-			t.Fatalf("SelectIT should set Content-Encoding=gzip when enabled, got %q", gotEncoding)
-		}
-		if gotAcceptEncoding != "gzip" {
-			t.Fatalf("SelectIT should set Accept-Encoding=gzip when gzip is enabled, got %q", gotAcceptEncoding)
+		// harness-ti /it/select decodes JSON directly (no gzip middleware), so
+		// SelectIT must send uncompressed JSON.
+		if gotEncoding != "" {
+			t.Fatalf("SelectIT should not set Content-Encoding, got %q", gotEncoding)
 		}
 		if gotPath != "/it/select" {
 			t.Fatalf("SelectIT should call /it/select, got %q", gotPath)

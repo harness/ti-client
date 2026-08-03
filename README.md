@@ -113,6 +113,15 @@ The client expects the following environment variables (defined in `types/types.
 - `HARNESS_TI_SERVICE_ENDPOINT`: TI service endpoint URL
 - `HARNESS_TI_SERVICE_TOKEN`: Authentication token for TI service
 
+## Testing
+
+Run the suite with race detection (required for PRs / CI):
+
+```bash
+make test        # go test -race ./...
+make test-short  # go test -race -short ./...
+```
+
 ## Dependencies
 
 - `github.com/cenkalti/backoff`: Exponential backoff for retries
