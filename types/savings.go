@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/harness/ti-client/types/cache/buildcache"
 	"github.com/harness/ti-client/types/cache/dlc"
+	"github.com/harness/ti-client/types/cache/golang"
 	"github.com/harness/ti-client/types/cache/gradle"
 	"github.com/harness/ti-client/types/cache/maven"
 )
@@ -26,6 +27,7 @@ const (
 type SavingsRequest struct {
 	GradleMetrics gradle.Metrics     `json:"gradle_metrics"`
 	MavenMetrics  maven.MavenMetrics `json:"maven_metrics"`
+	GoMetrics     golang.Metrics     `json:"go_metrics"`
 	DlcMetrics    dlc.Metrics        `json:"dlc_metrics"`
 }
 
