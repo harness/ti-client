@@ -433,6 +433,7 @@ type (
 		IsMavenBIUsed  bool     `json:"is_maven_bi_used,omitempty"`
 		IsGradleBIUsed bool     `json:"is_gradle_bi_used,omitempty"`
 		IsBazelBIUsed  bool     `json:"is_bazel_bi_used,omitempty"`
+		IsGoBIUsed     bool     `json:"is_go_bi_used,omitempty"`
 		Errors         []string `json:"errors,omitempty"`
 	}
 
