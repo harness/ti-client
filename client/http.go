@@ -57,16 +57,34 @@ const (
 	quarantinedTestsEndpoint = "/test-management/quarantined?accountId=%s&orgId=%s&projectId=%s&repo=%s"
 )
 
-// disableCoverageEnvVar is set by hcli (via the --disable-coverage flag) to
-// signal that code coverage collection is disabled for this run.
-const disableCoverageEnvVar = "HTX_DISABLE_COVERAGE"
+const (
+	// disableCoverageEnvVar is set by hcli (via the --disable-coverage flag) to
+	// signal that code coverage collection is disabled for this run.
+	disableCoverageEnvVar = "HTX_DISABLE_COVERAGE"
+	// coverageEnabledEnvVar is the same variable the language agents gate on, so
+	// that one signal decides both what the agents collect and what we tell
+	// ti-service to expect.
+	coverageEnabledEnvVar = "TI_COVERAGE_ENABLED"
+)
 
 // coverageEnabled reports whether code coverage is being collected. It is
 // forwarded to the V2 selection endpoints as the coverageEnabled query param so
-// ti-service validates the skip list against the Coverage Server. Coverage is
-// on by default and disabled only when hcli sets HTX_DISABLE_COVERAGE.
+// ti-service validates the skip list against the Coverage Server.
+//
+// Coverage is OPT-IN, matching the agents: a caller that sets nothing gets false.
+// This client is embedded in several services, and only hcli actually arranges for
+// coverage to be collected -- reporting true for everyone else would tell
+// ti-service to validate skip lists against coverage that no one is producing.
 func coverageEnabled() bool {
-	return os.Getenv(disableCoverageEnvVar) == ""
+	if os.Getenv(disableCoverageEnvVar) != "" {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(coverageEnabledEnvVar))) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 // defaultClient is the default http.Client.

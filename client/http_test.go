@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"reflect"
 	"testing"
 
@@ -496,4 +497,43 @@ func TestResponseBodyReader(t *testing.T) {
 			t.Fatal("responseBodyReader should return an error for invalid gzip")
 		}
 	})
+}
+
+func TestCoverageEnabledDefaultsToFalse(t *testing.T) {
+	cases := []struct {
+		name            string
+		tiCoverage      string
+		disableCoverage string
+		want            bool
+	}{
+		{name: "nothing set defaults to off", want: false},
+		{name: "explicit true", tiCoverage: "true", want: true},
+		{name: "numeric true", tiCoverage: "1", want: true},
+		{name: "yes", tiCoverage: "YES", want: true},
+		{name: "padded and mixed case", tiCoverage: "  True  ", want: true},
+		{name: "explicit false", tiCoverage: "false", want: false},
+		{name: "unrecognised value is off", tiCoverage: "maybe", want: false},
+		{name: "disable wins over enable", tiCoverage: "true", disableCoverage: "1", want: false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.tiCoverage == "" {
+				t.Setenv(coverageEnabledEnvVar, "")
+				os.Unsetenv(coverageEnabledEnvVar)
+			} else {
+				t.Setenv(coverageEnabledEnvVar, tc.tiCoverage)
+			}
+			if tc.disableCoverage == "" {
+				t.Setenv(disableCoverageEnvVar, "")
+				os.Unsetenv(disableCoverageEnvVar)
+			} else {
+				t.Setenv(disableCoverageEnvVar, tc.disableCoverage)
+			}
+
+			if got := coverageEnabled(); got != tc.want {
+				t.Fatalf("coverageEnabled() = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }
