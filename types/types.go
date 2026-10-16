@@ -123,18 +123,35 @@ type TestSuites struct {
 	Suites   []TestSuite      `json:"content"`
 }
 
+const (
+	TestArtifactTypeTrace      = "trace"
+	TestArtifactTypeVideo      = "video"
+	TestArtifactTypeScreenshot = "screenshot"
+)
+
+// TestArtifact references a file stored for a test case. Path is a reference, not
+// a URL; readers resolve it to an access URL when the report is viewed.
+type TestArtifact struct {
+	Type     string `json:"type"`
+	Path     string `json:"path"`
+	FileName string `json:"file_name"`
+	Size     int64  `json:"size"`
+	Attempt  int    `json:"attempt,omitempty"` // 0 for the first run, N for retry N
+}
+
 type TestCase struct {
-	Name        string `json:"name"`
-	ClassName   string `json:"class_name"`
-	FileName    string `json:"file_name"`
-	SuiteName   string `json:"suite_name"`
-	Result      Result `json:"result"`
-	DurationMs  int64  `json:"duration_ms"`
-	SystemOut   string `json:"stdout"`
-	SystemErr   string `json:"stderr"`
-	Flaky       bool   `json:"flaky"`
-	Quarantine  bool   `json:"quarantine"`
-	Problematic bool   `json:"problematic"`
+	Name        string         `json:"name"`
+	ClassName   string         `json:"class_name"`
+	FileName    string         `json:"file_name"`
+	SuiteName   string         `json:"suite_name"`
+	Result      Result         `json:"result"`
+	DurationMs  int64          `json:"duration_ms"`
+	SystemOut   string         `json:"stdout"`
+	SystemErr   string         `json:"stderr"`
+	Flaky       bool           `json:"flaky"`
+	Quarantine  bool           `json:"quarantine"`
+	Problematic bool           `json:"problematic"`
+	Artifacts   []TestArtifact `json:"artifacts,omitempty"`
 }
 
 type TestSummary struct {
