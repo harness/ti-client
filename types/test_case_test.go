@@ -32,8 +32,9 @@ func TestTestCaseArtifactsRoundTrip(t *testing.T) {
 	in := TestCase{
 		Name: "login should fail",
 		Artifacts: []TestArtifact{
-			{Type: TestArtifactTypeTrace, Path: "login-chromium/trace.zip", FileName: "trace.zip", Size: 8524},
-			{Type: TestArtifactTypeScreenshot, Path: "login-chromium-retry1/test-failed-1.png", FileName: "test-failed-1.png", Size: 5664, Attempt: 1},
+			{Type: TestArtifactTypeTrace, Path: "step1/login-chromium/trace.zip", Size: 8524},
+			// A producer that still sets FileName keeps working.
+			{Type: TestArtifactTypeVideo, Path: "step1/login-chromium-retry1/video.webm", FileName: "video.webm", Size: 5664, Attempt: 1},
 		},
 	}
 	b, err := json.Marshal(in)
@@ -60,6 +61,11 @@ func TestTestArtifactJSONShape(t *testing.T) {
 			name: "first run omits attempt",
 			in:   TestArtifact{Type: TestArtifactTypeVideo, Path: "p/video.webm", FileName: "video.webm", Size: 1},
 			want: `{"type":"video","path":"p/video.webm","file_name":"video.webm","size":1}`,
+		},
+		{
+			name: "file name is omitted when empty",
+			in:   TestArtifact{Type: TestArtifactTypeTrace, Path: "step1/p/trace.zip", Size: 3},
+			want: `{"type":"trace","path":"step1/p/trace.zip","size":3}`,
 		},
 		{
 			name: "retry keeps attempt",
