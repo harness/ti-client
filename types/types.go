@@ -134,7 +134,7 @@ const (
 type TestArtifact struct {
 	Type     string `json:"type"`
 	Path     string `json:"path"`
-	FileName string `json:"file_name"`
+	FileName string `json:"file_name,omitempty"`
 	Size     int64  `json:"size"`
 	Attempt  int    `json:"attempt,omitempty"` // 0 for the first run, N for retry N
 }
